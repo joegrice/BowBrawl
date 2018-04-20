@@ -1,2 +1,3 @@
-import "./src/index";
-document.body.textContent = "I am being served from the server";
+import { BrawlGame } from "./src/client/engine/BrawlGame";
+
+new BrawlGame();

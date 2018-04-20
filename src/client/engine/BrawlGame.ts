@@ -3,13 +3,13 @@ import { Game } from "../Game";
 import { AssetConstants } from "../constants/AssetConstants";
 
 export class BrawlGame extends Game implements PhaserLifecycle {
-    protected game: Phaser.Game;
+    private game: Phaser.Game;
     constructor() {
         super();
         this.game = new Phaser.Game(1024, 768, Phaser.AUTO, "BowBrawl", {
-            preload: this.preload(),
-            create: this.create(),
-            update: this.update()
+            preload: this.preload,
+            create: this.create,
+            update: this.update
         });
     }
 
@@ -21,7 +21,8 @@ export class BrawlGame extends Game implements PhaserLifecycle {
     preload(): void {
         const game = this.game.load;
         game.crossOrigin = "anonymous";
-        game.image(AssetConstants.BackgroundNight, "assets/backgroundNight.png");
+        game.image(AssetConstants.Players.PinkyPlayer, "assets/players/pinky.png");
+        game.image(AssetConstants.Backgrounds.BackgroundNight, "assets/backgroundNight.png");
     }
 
     update(): void {

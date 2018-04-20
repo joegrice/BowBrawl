@@ -15,24 +15,18 @@ export class Controls {
         if (this.playerInstance.sprite.alive) {
             this.playerInstance.playerState.set(PlayerStates.CanShoot, false);
             const vel = this.playerInstance.velocity;
-            const acceleration = this.playerInstance.sprite.body.acceleration;
-            const rotation = this.playerInstance.sprite.rotation;
-            const upSpeed = 100;
 
-            if (this.controls.cursors.up.isDown) {
-                this.gameInstance.physics.arcade.accelerationFromRotation(rotation, upSpeed, acceleration);
+            if (this.controls.cursors.up.isDown && this.playerInstance.sprite.body.onFloor()) {
+                this.playerInstance.sprite.body.velocity.y = -250;
                 // todo: play move animation
                 this.playerInstance.playerState.set(PlayerStates.IsMoving, true);
-            } else {
-                this.playerInstance.sprite.body.acceleration.set(0);
-                this.playerInstance.playerState.set(PlayerStates.IsMoving, false);
             }
-            if (this.controls.cursors.down.isDown) {
-                this.playerInstance.sprite.body.angularVelocity = -vel;
-            } else if (this.controls.cursors.left.isDown) {
-                this.playerInstance.sprite.body.angularVelocity = vel;
+            if (this.controls.cursors.left.isDown) {
+                this.playerInstance.sprite.body.velocity.x = -vel;
+            } else if (this.controls.cursors.right.isDown) {
+                this.playerInstance.sprite.body.velocity.x = vel;
             } else {
-                this.playerInstance.sprite.body.angularVelocity = 0;
+                this.playerInstance.sprite.body.velocity.x = 0;
             }
         }
     }
