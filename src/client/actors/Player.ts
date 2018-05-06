@@ -2,12 +2,16 @@ import { PlayerStates } from "../constants/PlayerStates";
 import { Controls } from "../controlls/Controls";
 import { AssetConstants } from "../constants/AssetConstants";
 import Physics = Phaser.Physics;
+import { Arrow } from "./Arrow";
 
 export class Player {
     private _sprite: Phaser.Sprite;
     private _playerState: Map<PlayerStates, boolean | number> = new Map<PlayerStates, boolean | number>();
     private _velocity = 300;
     private _controls: Controls;
+    private _fireRate = 200;
+    private _nextFire = 0;
+    private _ammo: Phaser.Group;
 
     constructor(private gameInstance: Phaser.Game, private playerInstance?: Player) {
         this.generatePlayer(gameInstance);
@@ -21,6 +25,7 @@ export class Player {
         this.sprite.anchor.set(0.5, 0.5);
         this.sprite.name = "Random name";
         this.addPhysicsToPlayer(game);
+        this.addAmmo();
     }
 
     private initControls(): void {
@@ -39,14 +44,21 @@ export class Player {
         this.controls.update();
     }
 
+    public fire() {
+        if (this.gameInstance.time.now > this._nextFire && this._ammo.countDead() > 0) {
+            this._nextFire = this.gameInstance.time.now + this._fireRate;
+            const arrow: Arrow = this._ammo.getFirstDead();
+            arrow.reset(this.sprite.x, this.sprite.y);
+            arrow.updateArrow(this.gameInstance);
+        }
+    }
+
     public pickupWeapon() {
         // todo: When user picks up new weapon
         throw new Error("Function not implemented");
     }
 
     // Setters and Getters
-
-
     get controls(): Controls {
         return this._controls;
     }
@@ -73,5 +85,14 @@ export class Player {
 
     set velocity(value: number) {
         this._velocity = value;
+    }
+
+    private addAmmo() {
+        this._ammo = this.gameInstance.add.group();
+        this._ammo.classType = Arrow;
+        for (let i = 0; i < 5; i++) {
+            const arrow: Arrow = new Arrow(this.gameInstance, 0, 0);
+            this._ammo.add(arrow);
+        }
     }
 }

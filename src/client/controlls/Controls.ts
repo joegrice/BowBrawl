@@ -7,7 +7,8 @@ export class Controls {
     constructor(private gameInstance: Phaser.Game, private playerInstance: Player) {
         this.controls = {
             cursors: this.gameInstance.input.keyboard.createCursorKeys(),
-            shoot: this.gameInstance.input.keyboard.addKey(Phaser.KeyCode.SPACEBAR)
+            shoot: this.gameInstance.input.keyboard.addKey(Phaser.KeyCode.SPACEBAR),
+            mouse: this.gameInstance.input.activePointer
         };
     }
 
@@ -29,6 +30,10 @@ export class Controls {
             } else {
                 this.playerInstance.sprite.body.velocity.x = 0;
             }
+
+            if (this.controls.mouse.leftButton.isDown) {
+                this.playerInstance.fire();
+            }
         }
     }
 }
@@ -36,4 +41,5 @@ export class Controls {
 interface ControlHandling {
     cursors: Phaser.CursorKeys;
     shoot: Phaser.Key;
+    mouse: Phaser.Pointer;
 }

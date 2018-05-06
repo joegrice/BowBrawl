@@ -11,4 +11,7 @@ export namespace AssetConstants {
     export enum Resources {
         PlatformPositions = "platform_positions.json"
     }
+    export enum Projectiles {
+        Arrow = "arrow.png"
+    }
 }
