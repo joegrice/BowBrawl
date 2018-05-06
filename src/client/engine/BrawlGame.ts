@@ -4,6 +4,7 @@ import { AssetConstants } from "../constants/AssetConstants";
 
 export class BrawlGame extends Game implements PhaserLifecycle {
     private game: Phaser.Game;
+
     constructor() {
         super();
         this.game = new Phaser.Game(1024, 768, Phaser.AUTO, "BowBrawl", {
@@ -23,6 +24,8 @@ export class BrawlGame extends Game implements PhaserLifecycle {
         game.crossOrigin = "anonymous";
         game.image(AssetConstants.Players.PinkyPlayer, "assets/players/pinky.png");
         game.image(AssetConstants.Backgrounds.BackgroundNight, "assets/backgroundNight.png");
+        game.image(AssetConstants.Environment.Platform, "assets/platform.png");
+        game.text(AssetConstants.Resources.PlatformPositions, "resources/" + AssetConstants.Resources.PlatformPositions);
     }
 
     update(): void {

@@ -1,10 +1,11 @@
 import { Player } from "./actors/Player";
 import { AssetConstants } from "./constants/AssetConstants";
-declare const window: Window;
+import { PlatformGenerator } from "./engine/PlatformGenerator";
 
 export class Game {
     private players: Player[] = [];
     private player: Player;
+    private platforms: Phaser.Group;
 
     /**
      * @desc To be used for attaching listeners
@@ -12,9 +13,15 @@ export class Game {
      */
     protected manageAssets(game: Phaser.Game): void {
         this.player = new Player(game);
+
+        this.platforms = game.add.group();
+        const platformGenerator = new PlatformGenerator(game, this.platforms);
+        platformGenerator.generatePlatforms();
     }
 
     protected gameUpdate(game: Phaser.Game): void {
+        game.physics.arcade.collide(this.player.sprite, this.platforms);
+
         if (this.player && this.player.controls) {
             this.player.updateView();
         }

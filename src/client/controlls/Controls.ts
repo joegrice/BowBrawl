@@ -16,7 +16,8 @@ export class Controls {
             this.playerInstance.playerState.set(PlayerStates.CanShoot, false);
             const vel = this.playerInstance.velocity;
 
-            if (this.controls.cursors.up.isDown && this.playerInstance.sprite.body.onFloor()) {
+            if (this.controls.cursors.up.isDown && (this.playerInstance.sprite.body.onFloor()
+                || this.playerInstance.sprite.body.touching.down)) {
                 this.playerInstance.sprite.body.velocity.y = -250;
                 // todo: play move animation
                 this.playerInstance.playerState.set(PlayerStates.IsMoving, true);

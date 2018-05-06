@@ -32,6 +32,7 @@ export class Player {
         this.sprite.body.collideWorldBounds = true;
         this.sprite.body.gravity.y = 800;
         this.sprite.body.angularDrag = 50;
+        this.sprite.body.enable = true;
     }
 
     public updateView(): void {
