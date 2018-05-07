@@ -23,6 +23,6 @@ export class Arrow extends Phaser.Sprite {
     }
 
     private updateRotation(game: Phaser.Game) {
-        this.rotation = game.physics.arcade.moveToPointer(this);
+        this.rotation = game.physics.arcade.moveToPointer(this, 650);
     }
 }
