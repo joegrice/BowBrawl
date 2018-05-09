@@ -1,0 +1,16 @@
+[
+  {
+    "name": "movementSpeedBoost",
+    "health": 0,
+    "velocity": 200,
+    "gravity": 0,
+    "fireSpeed": 0
+  },
+  {
+    "name": "fireSpeedBoost",
+    "health": 0,
+    "velocity": 0,
+    "gravity": 0,
+    "fireSpeed": 150
+  }
+]

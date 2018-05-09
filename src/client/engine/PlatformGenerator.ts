@@ -1,15 +1,6 @@
 import { AssetConstants } from "../constants/AssetConstants";
 import { Platform } from "../actors/Platform";
-
-class Location {
-    x: number;
-    y: number;
-
-    constructor(x: number, y: number) {
-        this.x = x;
-        this.y = y;
-    }
-}
+import { Location } from "../actors/Location";
 
 export class PlatformGenerator {
 

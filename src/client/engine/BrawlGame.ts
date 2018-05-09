@@ -25,8 +25,11 @@ export class BrawlGame extends Game implements PhaserLifecycle {
         game.image(AssetConstants.Players.PinkyPlayer, "assets/players/pinky.png");
         game.image(AssetConstants.Backgrounds.BackgroundNight, "assets/backgroundNight.png");
         game.image(AssetConstants.Environment.Platform, "assets/platform.png");
+        game.image(AssetConstants.PowerUps.FireSpeedBoost, "assets/power_ups/" + AssetConstants.PowerUps.FireSpeedBoost + ".png");
+        game.image(AssetConstants.PowerUps.MovementSpeedBoost, "assets/power_ups/" + AssetConstants.PowerUps.MovementSpeedBoost + ".png");
         game.image(AssetConstants.Projectiles.Arrow, "assets/" + AssetConstants.Projectiles.Arrow);
         game.text(AssetConstants.Resources.PlatformPositions, "resources/" + AssetConstants.Resources.PlatformPositions);
+        game.text(AssetConstants.Resources.PowerUpConfigs, "resources/" + AssetConstants.Resources.PowerUpConfigs);
     }
 
     update(): void {

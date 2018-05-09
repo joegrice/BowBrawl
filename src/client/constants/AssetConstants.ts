@@ -9,9 +9,14 @@ export namespace AssetConstants {
         Platform = "platform.png"
     }
     export enum Resources {
-        PlatformPositions = "platform_positions.json"
+        PlatformPositions = "platform_positions.json",
+        PowerUpConfigs = "power_up_configs.json"
     }
     export enum Projectiles {
         Arrow = "arrow.png"
+    }
+    export enum PowerUps {
+        FireSpeedBoost = "fireSpeedBoost",
+        MovementSpeedBoost = "movementSpeedBoost"
     }
 }
