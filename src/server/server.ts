@@ -4,7 +4,6 @@ import { Socket } from "socket.io";
 import PlayerEvents = Events.PlayerEvents;
 import { setInterval } from "timers";
 import GameEvents = Events.GameEvents;
-import { platform } from "os";
 import { PlayerModel } from "../shared/PlayerModel";
 
 const uuid = require("uuid");

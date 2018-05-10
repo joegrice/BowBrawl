@@ -1,0 +1,25 @@
+export class Hud {
+    constructor(private ammo: Phaser.Text, private name: Phaser.Text, private style: { font, fill }) {
+        this.style = {
+            font: "10px Arial",
+            fill: "#ffffff"
+        };
+    }
+
+    public setName(game: Phaser.Game, player): void {
+        this.name = game.add.text(0, 10, player.name.substring(0, 6), this.style);
+        player.addChild(this.name);
+    }
+
+    public update(ammo): void {
+        this.ammo.setText(`${ammo ? ammo : ""}`);
+    }
+
+    public setAmmo(game: Phaser.Game, player, weapon): void {
+        if (this.ammo) {
+            this.ammo.setText("");
+        }
+        this.ammo = game.add.text(0, 25, weapon.arrowCount, this.style);
+        player.addChild(this.ammo);
+    }
+}
