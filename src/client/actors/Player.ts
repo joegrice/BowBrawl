@@ -1,30 +1,32 @@
 import { PlayerStates } from "../constants/PlayerStates";
 import { Controls } from "../controlls/Controls";
-import { AssetConstants } from "../constants/AssetConstants";
 import Physics = Phaser.Physics;
-import { Arrow } from "./Arrow";
-import { PowerUpConfig } from "./PowerUpConfig";
 
-export class Player extends Phaser.Sprite {
+export class Player {
+    // Sprite should be variable of player in order to provide an interface to pass to server
+    private _player: Phaser.Sprite;
     private _playerState: Map<PlayerStates, boolean | number> = new Map<PlayerStates, boolean | number>();
     private _velocity = 300;
     private _controls: Controls;
-    private _fireRate = 200;
-    private _nextFire = 0;
-    private _fireSpeed = 600;
-    private _ammo: Phaser.Group;
-    private _powerUpActive: boolean;
 
-    constructor(game: Phaser.Game) {
-        super(game, 100, 100, AssetConstants.Players.PinkyPlayer);
+    // todo: Temp remove
+    /*  private _fireRate = 200;
+      private _nextFire = 0;
+      private _fireSpeed = 600;
+      private _ammo: Phaser.Group;*/
+
+    // Power ups should be incidated in states?
+    //  private _powerUpActive: boolean;
+
+    constructor(game: Phaser.Game, player: Player) {
+        // super(game, 100, 100, AssetConstants.Players.PinkyPlayer);
         // todo: Should later be moved to a factory? Or can this be considered a factory?
         this.initControls(game);
-        this.id = "1"; // todo: Automate this later
-        this.anchor.set(0.5, 0.5);
-        this.name = "Random name";
-        this._powerUpActive = false;
+        // this.id = "1"; // todo: Automate this later
+        // this.name = "Random name";
+        // this._powerUpActive = false;
         this.addPhysicsToPlayer(game);
-        this.addAmmo(game);
+        // this.addAmmo(game);
     }
 
     private initControls(game: Phaser.Game): void {
@@ -33,32 +35,35 @@ export class Player extends Phaser.Sprite {
 
     private addPhysicsToPlayer(game: Phaser.Game): void {
         game.physics.enable(this, Physics.ARCADE);
-        this.body.collideWorldBounds = true;
-        this.body.gravity.y = 800;
-        this.body.angularDrag = 50;
-        this.body.enable = true;
+        this._player.body.collideWorldBounds = true;
+        this._player.body.gravity.y = 800;
+        this._player.body.angularDrag = 50;
+        this._player.body.enable = true;
+        this._player.anchor.set(0.5, 0.5);
     }
 
     public updateView(): void {
         this.controls.update();
     }
+    public
+    // todo: Temp remove
+    /* public fire(game: Phaser.Game) {
+         if (game.time.now > this._nextFire && this._ammo  > 0) {
+             this._nextFire = game.time.now + this._fireRate;
+             const arrow: Arrow = this._ammo.getFirstDead();
+             arrow.reset(this.x, this.y);
+             arrow.fire(game, this._fireSpeed);
+         }
+     }*/
 
-    public fire(game: Phaser.Game) {
-        if (game.time.now > this._nextFire && this._ammo.countDead() > 0) {
-            this._nextFire = game.time.now + this._fireRate;
-            const arrow: Arrow = this._ammo.getFirstDead();
-            arrow.reset(this.x, this.y);
-            arrow.fire(game, this._fireSpeed);
-        }
-    }
-
-    public applyPowerUp(config: PowerUpConfig) {
-        this._fireSpeed += config.fireSpeed;
-        this._velocity += config.velocity;
-        this.body.gravity.y -= config.gravity;
-        this.health += config.health;
-    }
-
+    // todo: Temp remove
+    /*  public applyPowerUp(config: PowerUpConfig) {
+          this._fireSpeed += config.fireSpeed;
+          this._velocity += config.velocity;
+          this.body.gravity.y -= config.gravity;
+          this.health += config.health;
+      }
+  */
     public pickupWeapon() {
         // todo: When user picks up new weapon
         throw new Error("Function not implemented");
@@ -85,20 +90,20 @@ export class Player extends Phaser.Sprite {
         this._velocity = value;
     }
 
-    get powerUp(): boolean {
-        return this._powerUpActive;
+    get player(): Phaser.Sprite {
+        return this._player;
     }
 
-    set powerUp(value: boolean) {
-        this._powerUpActive = value;
+    set player(value: Phaser.Sprite) {
+        this._player = value;
     }
 
-    private addAmmo(game: Phaser.Game) {
-        this._ammo = game.add.group();
-        this._ammo.classType = Arrow;
-        for (let i = 0; i < 5; i++) {
-            const arrow: Arrow = new Arrow(game, 0, 0);
-            this._ammo.add(arrow);
-        }
-    }
+    /* private addAmmo(game: Phaser.Game) {
+         this._ammo = game.add.group();
+         this._ammo.classType = Arrow;
+         for (let i = 0; i < 5; i++) {
+             const arrow: Arrow = new Arrow(game, 0, 0);
+             this._ammo.add(arrow);
+         }
+     }*/
 }
