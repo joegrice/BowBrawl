@@ -20,7 +20,6 @@ export class Controls {
             if (this.controls.cursors.up.isDown && (this.playerInstance.player.body.onFloor()
                 || this.playerInstance.player.body.touching.down)) {
                 this.playerInstance.player.body.velocity.y = -250;
-                // todo: play move animation
                 this.playerInstance.playerState.set(PlayerStates.IsMoving, true);
             }
             if (this.controls.cursors.left.isDown) {
@@ -32,7 +31,7 @@ export class Controls {
             }
 
             if (this.controls.mouse.leftButton.isDown) {
-                this.playerInstance.player.body.fire(this.gameInstance);
+                this.playerInstance.playerState.set(PlayerStates.Shooting, true);
             }
         }
     }

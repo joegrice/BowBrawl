@@ -31,8 +31,7 @@ export class Game {
      */
     protected manageAssets(game: Phaser.Game): void {
         this.players = [];
-        // this.players.classType = Player;
-        // this.player = game.add.existing(new Player(game));
+
         window.socket.on(PlayerEvents.joined, (player) => {
             this.players.push(new Player(game, player, AssetConstants.Players.PinkyPlayer));
         });
