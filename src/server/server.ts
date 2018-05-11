@@ -21,7 +21,7 @@ app.get("/", (req, res) => {
 
 class GameServer {
 
-    private _dirtyFlag = false;
+    private _gameHasStarted = false;
 
     constructor() {
         this.socketEvents();
@@ -98,7 +98,7 @@ class GameServer {
 
     private gameInitialised(socket: Socket): void {
         // Start game on first user login
-        if (!this._dirtyFlag) {
+        if (!this._gameHasStarted) {
             this._dirtyFlag = true;
         }
         // Interval for arrow spawning
