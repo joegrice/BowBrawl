@@ -11,7 +11,7 @@ const uuid = require("uuid");
 const express = require("express");
 const app = express();
 const http = require("http").Server(app);
-const IO = require("socket.io")(http);
+const io = require("socket.io")(http);
 
 app.use(express.static("public"));
 
@@ -34,12 +34,13 @@ class GameServer {
     }
 
     private socketEvents(): void {
-        IO.on(ServerEvents.connected, socket => {
+        io.on(ServerEvents.connected, socket => {
             this.attachListeners(socket);
         });
     }
 
     private attachListeners(socket: Socket): void {
+        console.info("Listeners attached");
         this.addSignOnListener(socket);
         this.addMovementListener(socket);
         this.addSignOutListener(socket);
@@ -60,8 +61,10 @@ class GameServer {
     private addSignOnListener(socket) {
         socket.on(GameEvents.authentication, (player, gameSize) => {
             socket.emit(PlayerEvents.players, this.getAllPlayers());
+            this.createPlayer(socket, player, gameSize);
             socket.emit(PlayerEvents.protagonist, socket.player);
             socket.broadcast.emit(PlayerEvents.joined, socket.player);
+            this.gameInitialised(socket);
         });
     }
 
@@ -99,20 +102,30 @@ class GameServer {
     private gameInitialised(socket: Socket): void {
         // Start game on first user login
         if (!this._gameHasStarted) {
-            this._dirtyFlag = true;
+            this._gameHasStarted = true;
         }
         // Interval for arrow spawning
+        this.makeRandomCoordinatesDrop(socket, 5000);
+    }
+
+    private get players(): number {
+        return Object.keys(io.sockets.connected).length;
+    }
+
+    private makeRandomCoordinatesDrop(socket, interval: number) {
         setInterval(() => {
-            const coordinates = {
-                x: Math.floor(Math.random() * 1024) + 1,
-                y: Math.floor(Math.random() * 768) + 1
-            };
+            const coordinates = this.generateCoordinates();
             socket.emit(GameEvents.drop, coordinates);
             socket.broadcast.emit(GameEvents.drop, coordinates);
-        }, 10000);
+        }, interval);
+
     }
-    private get players(): number {
-        return Object.keys(IO.sockets.connected).length;
+
+    private generateCoordinates(): { x: number, y: number } {
+        return {
+            x: Math.floor(Math.random() * 1024) + 1,
+            y: Math.floor(Math.random() * 768) + 1
+        };
     }
 
     /**
@@ -121,11 +134,11 @@ class GameServer {
      */
     private getAllPlayers(): PlayerModel[] {
         const players = [];
-        Object.keys(IO.sockets.connected).map((socketId) => {
-           const player = IO.sockets.connected[socketId].player;
-           if (player) {
-               players.push(player);
-           }
+        Object.keys(io.sockets.connected).map((socketId) => {
+            const player = io.sockets.connected[ socketId ].player;
+            if (player) {
+                players.push(player);
+            }
         });
         return players;
     }

@@ -6,8 +6,8 @@ export namespace Events {
         public static drop: "drop";
     }
     export class ServerEvents {
-        public static connected = "connected";
-        public static discconected = "disconnected";
+        public static connected = "connection";
+        public static discconected = "disconnect";
     }
     export class PlayerEvents {
         public static joined = "player:joined";
