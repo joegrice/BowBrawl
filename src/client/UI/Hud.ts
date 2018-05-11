@@ -1,5 +1,9 @@
 export class Hud {
-    constructor(private ammo: Phaser.Text, private name: Phaser.Text, private style: { font, fill }) {
+    private ammo: Phaser.Text;
+    private name: Phaser.Text;
+    private style: { font, fill };
+
+    constructor() {
         this.style = {
             font: "10px Arial",
             fill: "#ffffff"

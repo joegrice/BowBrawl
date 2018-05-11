@@ -4,50 +4,113 @@ import GameEvents = Events.GameEvents;
 declare const window: any;
 
 export class Login {
-    constructor(public formContainer: HTMLDivElement, public loginPage: HTMLDivElement, public form: HTMLDivElement,
-                public loginForm: HTMLFormElement, public input: HTMLInputElement, public button: HTMLButtonElement,
-                private name: any) {
+    private _formContainer: HTMLDivElement;
+    private _loginPage: HTMLDivElement;
+    private _form: HTMLDivElement;
+    private _loginForm: HTMLFormElement;
+    private _input: HTMLInputElement;
+    private _button: HTMLButtonElement;
+    private _name: any;
+
+    constructor() {
         this.createForm();
     }
 
     private createForm(): void {
-        this.formContainer = document.createElement("div");
-        this.formContainer.className = "form-container";
+        this._formContainer = document.createElement("div");
+        this._formContainer.className = "form-container";
 
-        this.loginPage = document.createElement("div");
-        this.loginPage.className = "login-page";
+        this._loginPage = document.createElement("div");
+        this._loginPage.className = "login-page";
 
-        this.form = document.createElement("div");
-        this.form.className = "form";
+        this._form = document.createElement("div");
+        this._form.className = "_form";
 
-        this.loginForm = document.createElement("form");
+        this._loginForm = document.createElement("form");
 
-        this.input = document.createElement("input");
-        this.input.setAttribute("type", "text");
-        this.input.placeholder = "username";
-        this.input.id = "your-name";
-        this.input.focus();
+        this._input = document.createElement("input");
+        this._input.setAttribute("type", "text");
+        this._input.placeholder = "username";
+        this._input.id = "your-name";
+        this._input.focus();
 
-        this.button = document.createElement("button");
-        this.button.innerText = "Join game";
-        this.button.addEventListener("click", (e) => this.createPlayer(e));
+        this._button = document.createElement("button");
+        this._button.innerText = "Join game";
+        this._button.addEventListener("click", (e) => this.createPlayer(e));
 
-        this.loginForm.appendChild(this.input);
-        this.loginForm.appendChild(this.button);
-        this.loginPage.appendChild(this.form);
-        this.form.appendChild(this.loginForm);
-        this.formContainer.appendChild(this.loginPage);
+        this._loginForm.appendChild(this._input);
+        this._loginForm.appendChild(this._button);
+        this._loginPage.appendChild(this._form);
+        this._form.appendChild(this._loginForm);
+        this._formContainer.appendChild(this._loginPage);
 
-        document.body.appendChild(this.formContainer);
+        document.body.appendChild(this._formContainer);
     }
 
     private createPlayer(e: MouseEvent): void {
         e.preventDefault();
-        this.formContainer.classList.toggle("visible");
-        const name = this.input.value;
+        this._formContainer.classList.toggle("visible");
+        const name = this._input.value;
         window.socket.emit(GameEvents.authentication, {name}, {
             x: window.innerWidth,
             y: window.innerHeight
         });
+    }
+
+
+    get formContainer(): HTMLDivElement {
+        return this._formContainer;
+    }
+
+    set formContainer(value: HTMLDivElement) {
+        this._formContainer = value;
+    }
+
+    get loginPage(): HTMLDivElement {
+        return this._loginPage;
+    }
+
+    set loginPage(value: HTMLDivElement) {
+        this._loginPage = value;
+    }
+
+    get form(): HTMLDivElement {
+        return this._form;
+    }
+
+    set form(value: HTMLDivElement) {
+        this._form = value;
+    }
+
+    get loginForm(): HTMLFormElement {
+        return this._loginForm;
+    }
+
+    set loginForm(value: HTMLFormElement) {
+        this._loginForm = value;
+    }
+
+    get input(): HTMLInputElement {
+        return this._input;
+    }
+
+    set input(value: HTMLInputElement) {
+        this._input = value;
+    }
+
+    get button(): HTMLButtonElement {
+        return this._button;
+    }
+
+    set button(value: HTMLButtonElement) {
+        this._button = value;
+    }
+
+    get name(): any {
+        return this._name;
+    }
+
+    set name(value: any) {
+        this._name = value;
     }
 }

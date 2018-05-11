@@ -8,6 +8,7 @@ import { Events } from "../shared/Events";
 import PlayerEvents = Events.PlayerEvents;
 import GameEvents = Events.GameEvents;
 import { PlayerStates } from "./constants/PlayerStates";
+import { Login } from "./screens/login";
 
 declare const window: any; // This is necessary to get socket events!
 
@@ -17,9 +18,11 @@ export class Game {
     private player: Player;
     private platforms: Phaser.Group;
     private powerUps: Phaser.Group;
+    private login: Login;
 
     constructor() {
         window.socket = io.connect();
+        this.login = new Login();
     }
 
     /**
@@ -31,14 +34,14 @@ export class Game {
         // this.players.classType = Player;
         // this.player = game.add.existing(new Player(game));
         window.socket.on(PlayerEvents.joined, (player) => {
-            this.players.push(new Player(game, player));
+            this.players.push(new Player(game, player, AssetConstants.Players.PinkyPlayer));
         });
 
         // Creating a new event for the main player?
         // a main  player is the player that owns the lobby
         // If we see that this has no semantic value can be changed to the general player event
         window.socket.on(PlayerEvents.protagonist, (player) => {
-            this.player = new Player(game, player);
+            this.player = new Player(game, player, AssetConstants.Players.PinkyPlayer);
             this.players.push(this.player);
         });
         window.socket.on(PlayerEvents.players, (players) => {
@@ -49,7 +52,7 @@ export class Game {
             // And update this players browser
             // Assuming ammo is visible
             players.map((player: Player) => {
-                const enemy = new Player(game, player);
+                const enemy = new Player(game, player, AssetConstants.Players.PinkyPlayer);
                 // todo: update states
                 this.players.push(player);
             });
@@ -113,19 +116,23 @@ export class Game {
      * @param {Phaser.Game} game
      */
     protected gameUpdate(game: Phaser.Game): void {
-        window.socket.emit(PlayerEvents.coordinates, {
-            x: this.player.player.position.x,
-            y: this.player.player.position.y,
-            r: this.player.player.rotation,
-            f: this.player.playerState.get(PlayerStates.Shooting),
-            m: this.player.playerState.get(PlayerStates.IsMoving),
-            a: this.player.playerState.get(PlayerStates.AMMO)
-        });
-        // Further check to see if any player has collided with a player we bounce them off
-        game.physics.arcade.collide(
-            this.player.player,
-            this.players.map(player => player.player)
-        );
+        if (this.player && this.player.controls) {
+            window.socket.emit(PlayerEvents.coordinates, {
+                x: this.player.player.position.x,
+                y: this.player.player.position.y,
+                r: this.player.player.rotation,
+                f: this.player.playerState.get(PlayerStates.Shooting),
+                m: this.player.playerState.get(PlayerStates.IsMoving),
+                a: this.player.playerState.get(PlayerStates.AMMO)
+            });
+            // Further check to see if any player has collided with a player we bounce them off
+            game.physics.arcade.collide(
+                this.player.player,
+                this.players.map(player => player.player)
+            );
+        }
+
+
         // todo: Check if arrow has collided with a player an emit the event but first lets create an arrow class of some sort
         // todo: Then using the overlap method we need to check if the player has touched any arrows and emit that event and destroy the arrow sprite
 

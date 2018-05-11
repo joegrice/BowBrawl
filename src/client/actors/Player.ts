@@ -1,14 +1,19 @@
 import { PlayerStates } from "../constants/PlayerStates";
 import { Controls } from "../controlls/Controls";
 import Physics = Phaser.Physics;
+import { Hud } from "../UI/Hud";
+import { Weapon } from "../weapon/Weapon";
+import { type } from "os";
+import { AssetConstants } from "../constants/AssetConstants";
 
 export class Player {
     // Sprite should be variable of player in order to provide an interface to pass to server
     private _player: Phaser.Sprite;
-    private _playerState: Map<PlayerStates, boolean | number> = new Map<PlayerStates, boolean | number>();
+    private _playerState: Map<PlayerStates, boolean | number>;
     private _velocity = 300;
     private _controls: Controls;
-
+    private _hud: Hud;
+    private _weapon: Weapon;
     // todo: Temp remove
     /*  private _fireRate = 200;
       private _nextFire = 0;
@@ -18,19 +23,13 @@ export class Player {
     // Power ups should be incidated in states?
     //  private _powerUpActive: boolean;
 
-    constructor(game: Phaser.Game, player: Player) {
-        // super(game, 100, 100, AssetConstants.Players.PinkyPlayer);
-        // todo: Should later be moved to a factory? Or can this be considered a factory?
-        this.initControls(game);
-        // this.id = "1"; // todo: Automate this later
-        // this.name = "Random name";
-        // this._powerUpActive = false;
-        this.addPhysicsToPlayer(game);
-        // this.addAmmo(game);
+    constructor(private game: Phaser.Game, player: Player, type: AssetConstants.Players) {
+        this.createPlayer(this.game, type);
+        this._playerState = new Map<PlayerStates, boolean | number>();
     }
 
-    private initControls(game: Phaser.Game): void {
-        this._controls = new Controls(game, this);
+    private initControls(): void {
+        this._controls = new Controls(this.game, this);
     }
 
     private addPhysicsToPlayer(game: Phaser.Game): void {
@@ -45,7 +44,6 @@ export class Player {
     public updateView(): void {
         this.controls.update();
     }
-    public
     // todo: Temp remove
     /* public fire(game: Phaser.Game) {
          if (game.time.now > this._nextFire && this._ammo  > 0) {
@@ -106,4 +104,8 @@ export class Player {
              this._ammo.add(arrow);
          }
      }*/
+    private createPlayer(game: Phaser.Game, type: any) {
+        this._hud = new Hud();
+        this.initControls();
+    }
 }
