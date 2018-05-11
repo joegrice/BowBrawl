@@ -13,26 +13,26 @@ export class Controls {
     }
 
     public update(): void {
-        if (this.playerInstance.alive) {
+        if (this.playerInstance.player.alive) {
             this.playerInstance.playerState.set(PlayerStates.CanShoot, false);
             const vel = this.playerInstance.velocity;
 
-            if (this.controls.cursors.up.isDown && (this.playerInstance.body.onFloor()
-                || this.playerInstance.body.touching.down)) {
-                this.playerInstance.body.velocity.y = -250;
+            if (this.controls.cursors.up.isDown && (this.playerInstance.player.body.onFloor()
+                || this.playerInstance.player.body.touching.down)) {
+                this.playerInstance.player.body.velocity.y = -250;
                 // todo: play move animation
                 this.playerInstance.playerState.set(PlayerStates.IsMoving, true);
             }
             if (this.controls.cursors.left.isDown) {
-                this.playerInstance.body.velocity.x = -vel;
+                this.playerInstance.player.body.velocity.x = -vel;
             } else if (this.controls.cursors.right.isDown) {
-                this.playerInstance.body.velocity.x = vel;
+                this.playerInstance.player.body.velocity.x = vel;
             } else {
-                this.playerInstance.body.velocity.x = 0;
+                this.playerInstance.player.body.velocity.x = 0;
             }
 
             if (this.controls.mouse.leftButton.isDown) {
-                this.playerInstance.fire(this.gameInstance);
+                this.playerInstance.player.body.fire(this.gameInstance);
             }
         }
     }

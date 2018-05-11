@@ -56,10 +56,14 @@ class GameServer {
             x: this.randomInt(0, windowSize.x),
             y: this.randomInt(0, windowSize.y)
         };
+        console.info(socket.player);
     }
 
     private addSignOnListener(socket) {
         socket.on(GameEvents.authentication, (player, gameSize) => {
+            console.info(player);
+            console.info("Creating player");
+
             socket.emit(PlayerEvents.players, this.getAllPlayers());
             this.createPlayer(socket, player, gameSize);
             socket.emit(PlayerEvents.protagonist, socket.player);

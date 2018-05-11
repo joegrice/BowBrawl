@@ -23,7 +23,7 @@ export class Player {
     // Power ups should be incidated in states?
     //  private _powerUpActive: boolean;
 
-    constructor(private game: Phaser.Game, player: Player, type: AssetConstants.Players) {
+    constructor(private game: Phaser.Game, public playerInstance: Phaser.Sprite, type: AssetConstants.Players) {
         this.createPlayer(this.game, type);
         this._playerState = new Map<PlayerStates, boolean | number>();
     }
@@ -33,12 +33,12 @@ export class Player {
     }
 
     private addPhysicsToPlayer(game: Phaser.Game): void {
-        game.physics.enable(this, Physics.ARCADE);
+        game.physics.enable(this._player, Physics.ARCADE);
         this._player.body.collideWorldBounds = true;
         this._player.body.gravity.y = 800;
         this._player.body.angularDrag = 50;
-        this._player.body.enable = true;
         this._player.anchor.set(0.5, 0.5);
+        this._player.body.immovable = false;
     }
 
     public updateView(): void {
@@ -107,5 +107,12 @@ export class Player {
     private createPlayer(game: Phaser.Game, type: any) {
         this._hud = new Hud();
         this.initControls();
+        this.player = game.add.sprite(this.playerInstance.x, this.playerInstance.y, type);
+        this.player.id = this.playerInstance.id;
+        this.player.anchor.set(0.5, 0.5);
+        // add animations
+        this.player.name = this.playerInstance.name;
+        this.addPhysicsToPlayer(game);
+        this._hud.setName(game, this.player);
     }
 }

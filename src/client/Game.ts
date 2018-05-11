@@ -52,7 +52,7 @@ export class Game {
             // And update this players browser
             // Assuming ammo is visible
             players.map((player: Player) => {
-                const enemy = new Player(game, player, AssetConstants.Players.PinkyPlayer);
+                const enemy = new Player(game, player.player, AssetConstants.Players.PinkyPlayer);
                 // todo: update states
                 this.players.push(player);
             });
@@ -116,20 +116,23 @@ export class Game {
      * @param {Phaser.Game} game
      */
     protected gameUpdate(game: Phaser.Game): void {
-        if (this.player && this.player.controls) {
-            window.socket.emit(PlayerEvents.coordinates, {
-                x: this.player.player.position.x,
-                y: this.player.player.position.y,
-                r: this.player.player.rotation,
-                f: this.player.playerState.get(PlayerStates.Shooting),
-                m: this.player.playerState.get(PlayerStates.IsMoving),
-                a: this.player.playerState.get(PlayerStates.AMMO)
-            });
-            // Further check to see if any player has collided with a player we bounce them off
-            game.physics.arcade.collide(
-                this.player.player,
-                this.players.map(player => player.player)
-            );
+        if (this.player) {
+            if (this.player.controls) {
+                this.player.updateView();
+                window.socket.emit(PlayerEvents.coordinates, {
+                    x: this.player.player.position.x,
+                    y: this.player.player.position.y,
+                    r: this.player.player.rotation,
+                    f: this.player.playerState.get(PlayerStates.Shooting),
+                    m: this.player.playerState.get(PlayerStates.IsMoving),
+                    a: this.player.playerState.get(PlayerStates.AMMO)
+                });
+                // Further check to see if any player has collided with a player we bounce them off
+                game.physics.arcade.collide(
+                    this.player.player,
+                    this.players.map(player => player.player)
+                );
+            }
         }
 
 
