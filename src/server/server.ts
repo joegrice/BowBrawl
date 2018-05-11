@@ -47,6 +47,27 @@ class GameServer {
         this.addHitListener(socket);
         this.addPickupListener(socket);
     }
+    private addHitListener(socket: Socket) {
+        socket.on(PlayerEvents.hit, (playerId) => {
+            socket.broadcast.emit(PlayerEvents.hit, playerId);
+        });
+    }
+    private gameInitialised(socket: Socket): void {
+        // Start game on first user login
+        if (!this._gameHasStarted) {
+            this._gameHasStarted = true;
+        }
+        // Interval for arrow spawning
+        this.makeRandomCoordinatesDrop(socket, 5000);
+    }
+    private makeRandomCoordinatesDrop(socket, interval: number) {
+        setInterval(() => {
+            const coordinates = this.generateCoordinates();
+            socket.emit(GameEvents.drop, coordinates);
+            socket.broadcast.emit(GameEvents.drop, coordinates);
+        }, interval);
+
+    }
 
     private createPlayer(socket, player: PlayerModel, windowSize: { x, y }): void {
         socket.player = {
@@ -56,14 +77,10 @@ class GameServer {
             x: this.randomInt(0, windowSize.x),
             y: this.randomInt(0, windowSize.y)
         };
-        console.info(socket.player);
     }
 
     private addSignOnListener(socket) {
         socket.on(GameEvents.authentication, (player, gameSize) => {
-            console.info(player);
-            console.info("Creating player");
-
             socket.emit(PlayerEvents.players, this.getAllPlayers());
             this.createPlayer(socket, player, gameSize);
             socket.emit(PlayerEvents.protagonist, socket.player);
@@ -75,7 +92,7 @@ class GameServer {
     private addMovementListener(socket) {
         socket.on(PlayerEvents.coordinates, (coors) => {
             socket.broadcast.emit(PlayerEvents.coordinates, {
-                coors,
+                coors: coors,
                 player: socket.player
             });
         });
@@ -89,11 +106,6 @@ class GameServer {
         });
     }
 
-    private addHitListener(socket: Socket) {
-        socket.on(PlayerEvents.hit, (playerId) => {
-            socket.broadcast.emit(PlayerEvents.hit, playerId);
-        });
-    }
 
     private addPickupListener(socket) {
         // Player picks up item
@@ -103,27 +115,11 @@ class GameServer {
         });
     }
 
-    private gameInitialised(socket: Socket): void {
-        // Start game on first user login
-        if (!this._gameHasStarted) {
-            this._gameHasStarted = true;
-        }
-        // Interval for arrow spawning
-        this.makeRandomCoordinatesDrop(socket, 5000);
-    }
 
     private get players(): number {
         return Object.keys(io.sockets.connected).length;
     }
 
-    private makeRandomCoordinatesDrop(socket, interval: number) {
-        setInterval(() => {
-            const coordinates = this.generateCoordinates();
-            socket.emit(GameEvents.drop, coordinates);
-            socket.broadcast.emit(GameEvents.drop, coordinates);
-        }, interval);
-
-    }
 
     private generateCoordinates(): { x: number, y: number } {
         return {
@@ -144,6 +140,7 @@ class GameServer {
                 players.push(player);
             }
         });
+        console.log(players);
         return players;
     }
 

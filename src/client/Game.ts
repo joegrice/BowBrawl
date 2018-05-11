@@ -9,6 +9,7 @@ import PlayerEvents = Events.PlayerEvents;
 import GameEvents = Events.GameEvents;
 import { PlayerStates } from "./constants/PlayerStates";
 import { Login } from "./screens/login";
+import { PlayerModel } from "../shared/PlayerModel";
 
 declare const window: any; // This is necessary to get socket events!
 
@@ -43,17 +44,18 @@ export class Game {
             this.player = new Player(game, player, AssetConstants.Players.PinkyPlayer);
             this.players.push(this.player);
         });
-        window.socket.on(PlayerEvents.players, (players) => {
+        window.socket.on(PlayerEvents.players, (players: Player[]) => {
             // If a returning or new player joins current game
             // Collect all data and update client
             // Thus player not seeing different things than rest
             // What this means we must collect all of the visible data the enemies have
             // And update this players browser
             // Assuming ammo is visible
-            players.map((player: Player) => {
-                const enemy = new Player(game, player.player, AssetConstants.Players.PinkyPlayer);
+            console.info(players);
+            players.forEach((player) => {
+                const enemy = new Player(game, player, AssetConstants.Players.PinkyPlayer);
                 // todo: update states
-                this.players.push(player);
+                this.players.push(enemy);
             });
         });
         window.socket.on(PlayerEvents.quit, (playerId) => {

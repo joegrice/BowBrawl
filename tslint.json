@@ -32,7 +32,7 @@
         "no-switch-case-fall-through": true,
         "no-trailing-whitespace": [true, "ignore-template-strings"],
         "no-var-keyword": true,
-        "object-literal-shorthand": true,
+        "object-literal-shorthand": false,
         "one-line": [true,
             "check-open-brace",
             "check-whitespace"

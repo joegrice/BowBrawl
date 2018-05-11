@@ -5,6 +5,7 @@ import { Hud } from "../UI/Hud";
 import { Weapon } from "../weapon/Weapon";
 import { type } from "os";
 import { AssetConstants } from "../constants/AssetConstants";
+import { PlayerModel } from "../../shared/PlayerModel";
 
 export class Player {
     // Sprite should be variable of player in order to provide an interface to pass to server
@@ -23,7 +24,7 @@ export class Player {
     // Power ups should be incidated in states?
     //  private _powerUpActive: boolean;
 
-    constructor(private game: Phaser.Game, public playerInstance: Phaser.Sprite, type: AssetConstants.Players) {
+    constructor(private game: Phaser.Game, public playerInstance: PlayerModel, type: AssetConstants.Players) {
         this.createPlayer(this.game, type);
         this._playerState = new Map<PlayerStates, boolean | number>();
     }
@@ -107,6 +108,7 @@ export class Player {
     private createPlayer(game: Phaser.Game, type: any) {
         this._hud = new Hud();
         this.initControls();
+        console.log(this.playerInstance);
         this.player = game.add.sprite(this.playerInstance.x, this.playerInstance.y, type);
         this.player.id = this.playerInstance.id;
         this.player.anchor.set(0.5, 0.5);
