@@ -6,6 +6,7 @@ import { Weapon } from "../weapon/Weapon";
 import { type } from "os";
 import { AssetConstants } from "../constants/AssetConstants";
 import { PlayerModel } from "../../shared/PlayerModel";
+import { PowerUpConfig } from "./PowerUpConfig";
 
 export class Player {
     // Sprite should be variable of player in order to provide an interface to pass to server
@@ -15,14 +16,14 @@ export class Player {
     private _controls: Controls;
     private _hud: Hud;
     private _weapon: Weapon;
-    // todo: Temp remove
-    /*  private _fireRate = 200;
-      private _nextFire = 0;
-      private _fireSpeed = 600;
-      private _ammo: Phaser.Group;*/
+    private _fireSpeed = 600;
 
-    // Power ups should be incidated in states?
-    //  private _powerUpActive: boolean;
+    // todo: Temp remove
+    /*  private _nextFire = 0;
+      private _ammo: Phaser.Group;
+      private _fireRate = 200;
+      Power ups should be incidated in states?
+       private _powerUpActive: boolean; */
 
     constructor(private game: Phaser.Game, public playerInstance: PlayerModel, type: AssetConstants.Players) {
         this.createPlayer(this.game, type);
@@ -35,6 +36,7 @@ export class Player {
 
     private addPhysicsToPlayer(game: Phaser.Game): void {
         game.physics.enable(this._player, Physics.ARCADE);
+        this.player.body.enable = true;
         this._player.body.collideWorldBounds = true;
         this._player.body.gravity.y = 800;
         this._player.body.angularDrag = 50;
@@ -45,6 +47,7 @@ export class Player {
     public updateView(): void {
         this.controls.update();
     }
+
     // todo: Temp remove
     /* public fire(game: Phaser.Game) {
          if (game.time.now > this._nextFire && this._ammo  > 0) {
@@ -55,14 +58,13 @@ export class Player {
          }
      }*/
 
-    // todo: Temp remove
-    /*  public applyPowerUp(config: PowerUpConfig) {
-          this._fireSpeed += config.fireSpeed;
-          this._velocity += config.velocity;
-          this.body.gravity.y -= config.gravity;
-          this.health += config.health;
-      }
-  */
+    public applyPowerUp(config: PowerUpConfig) {
+        this._fireSpeed += config.fireSpeed;
+        this._velocity += config.velocity;
+        this._player.body.gravity.y -= config.gravity;
+        this._player.health += config.health;
+    }
+
     public pickupWeapon() {
         // todo: When user picks up new weapon
         throw new Error("Function not implemented");

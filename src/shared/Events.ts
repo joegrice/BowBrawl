@@ -21,5 +21,6 @@ export namespace Events {
         public static pickup = "player:pickup";
         public static hit = "player:hit";
         public static coordinates = "player:coordinates";
+        public static powerup = "player:powerup";
     }
 }

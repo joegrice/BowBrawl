@@ -19,7 +19,7 @@ export class Controls {
 
             if (this.controls.cursors.up.isDown && (this.playerInstance.player.body.onFloor()
                 || this.playerInstance.player.body.touching.down)) {
-                this.playerInstance.player.body.velocity.y = -250;
+                this.playerInstance.player.body.velocity.y = -vel;
                 this.playerInstance.playerState.set(PlayerStates.IsMoving, true);
             }
             if (this.controls.cursors.left.isDown) {

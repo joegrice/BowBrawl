@@ -5,6 +5,7 @@ import PlayerEvents = Events.PlayerEvents;
 import { setInterval } from "timers";
 import GameEvents = Events.GameEvents;
 import { PlayerModel } from "../shared/PlayerModel";
+import { PowerUpConfig } from "../client/actors/PowerUpConfig";
 
 const uuid = require("uuid");
 
@@ -46,6 +47,7 @@ class GameServer {
         this.addSignOutListener(socket);
         this.addHitListener(socket);
         this.addPickupListener(socket);
+        this.addPowerUpListener(socket);
     }
     private addHitListener(socket: Socket) {
         socket.on(PlayerEvents.hit, (playerId) => {
@@ -98,6 +100,14 @@ class GameServer {
         });
     }
 
+    private addPowerUpListener(socket) {
+        // Player collects power up item
+        socket.on(PlayerEvents.powerup, (player, powerUpConfig: PowerUpConfig) => {
+            socket.player.applyPowerUp(powerUpConfig);
+            socket.broadcast.emit(PlayerEvents.powerup, player.uuid);
+        });
+    }
+
     private addSignOutListener(socket) {
         socket.on(ServerEvents.discconected, () => {
             if (socket.player) {
@@ -105,7 +115,6 @@ class GameServer {
             }
         });
     }
-
 
     private addPickupListener(socket) {
         // Player picks up item

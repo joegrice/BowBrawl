@@ -1,24 +1,31 @@
 import { AssetConstants } from "../constants/AssetConstants";
 import Physics = Phaser.Physics;
 
-export class Arrow extends Phaser.Sprite {
+export class Arrow {
+
+    private _sprite: Phaser.Sprite;
+    private _game: Phaser.Game;
 
     constructor(game: Phaser.Game, x: number, y: number) {
-        super(game, x, y, AssetConstants.Projectiles.Arrow);
+        this._game = game;
 
-        this.game = game;
+        this._sprite = this.createSprite(x, y);
+    }
 
-        this.game.physics.enable(this, Physics.ARCADE);
-        this.checkWorldBounds = true;
-        this.outOfBoundsKill = true;
-        this.body.enable = true;
-        this.exists = false;
-        this.alive = false;
-        this.body.allowRotation = false;
-        this.anchor.set(0.5);
+    createSprite(x: number, y: number): Phaser.Sprite {
+        const sprite = this._game.add.sprite(x, y, AssetConstants.Projectiles.Arrow);
+        this._game.physics.enable(sprite, Physics.ARCADE);
+        sprite.checkWorldBounds = true;
+        sprite.outOfBoundsKill = true;
+        sprite.body.enable = true;
+        sprite.exists = false;
+        sprite.alive = false;
+        sprite.body.allowRotation = false;
+        sprite.anchor.set(0.5);
+        return sprite;
     }
 
     fire(game: Phaser.Game, speed: number) {
-        this.rotation = game.physics.arcade.moveToPointer(this, speed);
+        this._sprite.rotation = game.physics.arcade.moveToPointer(this, speed);
     }
 }

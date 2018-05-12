@@ -10,6 +10,7 @@ import GameEvents = Events.GameEvents;
 import { PlayerStates } from "./constants/PlayerStates";
 import { Login } from "./screens/login";
 import { PlayerModel } from "../shared/PlayerModel";
+import { PowerUpConfig } from "./actors/PowerUpConfig";
 
 declare const window: any; // This is necessary to get socket events!
 
@@ -78,9 +79,14 @@ export class Game {
             // todo: Implementation
 
         });
+        window.socket.on(PlayerEvents.powerup, (player: Player, powerUpConfig: PowerUpConfig) => {
+            this.players.filter(actor => actor.player.id === player.player.id).map(player => {
+                player.applyPowerUp(powerUpConfig);
+            });
+        });
         window.socket.on(PlayerEvents.pickup, (player) => {
-            // Once arrows have been pickjed up
-            // Asign them to the user that has picked them up
+            // Once arrows have been picked up
+            // Assign them to the user that has picked them up
             this.players.filter(actor => actor.player.id === player).map(player => {
                 // todo: assign arrows to player
             });
@@ -133,9 +139,21 @@ export class Game {
                     this.player.player,
                     this.players.map(player => player.player)
                 );
+                // Allows players to stand on platforms
+                game.physics.arcade.collide(
+                    this.player.player,
+                    this.platforms
+                );
+                // Apply power up to player
+                game.physics.arcade.overlap(this.player.player, this.powerUps, (player: Phaser, powerUp: PowerUp) => {
+                    powerUp.kill();
+                    window.socket.emit(PlayerEvents.powerup, {
+                        player: this.player,
+                        powerUpConfig: powerUp
+                    });
+                });
             }
         }
-
 
         // todo: Check if arrow has collided with a player an emit the event but first lets create an arrow class of some sort
         // todo: Then using the overlap method we need to check if the player has touched any arrows and emit that event and destroy the arrow sprite
