@@ -40,7 +40,6 @@ export class Player {
         this._player.body.collideWorldBounds = true;
         this._player.body.gravity.y = 800;
         this._player.body.angularDrag = 50;
-        this._player.anchor.set(0.5, 0.5);
         this._player.body.immovable = false;
     }
 

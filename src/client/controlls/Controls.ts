@@ -16,8 +16,7 @@ export class Controls {
         if (this.playerInstance.player.alive) {
             this.playerInstance.playerState.set(PlayerStates.CanShoot, false);
             const vel = this.playerInstance.velocity;
-
-            if (this.controls.cursors.up.isDown && (this.playerInstance.player.body.onFloor()
+            if (this.controls.cursors.up.isDown && (this.playerInstance.player.body.blocked.down
                 || this.playerInstance.player.body.touching.down)) {
                 this.playerInstance.player.body.velocity.y = -vel;
                 this.playerInstance.playerState.set(PlayerStates.IsMoving, true);

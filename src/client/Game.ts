@@ -45,7 +45,7 @@ export class Game {
             this.player = new Player(game, player, AssetConstants.Players.PinkyPlayer);
             this.players.push(this.player);
         });
-        window.socket.on(PlayerEvents.players, (players: Player[]) => {
+        window.socket.on(PlayerEvents.players, (players: PlayerModel[]) => {
             // If a returning or new player joins current game
             // Collect all data and update client
             // Thus player not seeing different things than rest
@@ -53,7 +53,7 @@ export class Game {
             // And update this players browser
             // Assuming ammo is visible
             console.info(players);
-            players.forEach((player) => {
+            players.forEach((player: PlayerModel) => {
                 const enemy = new Player(game, player, AssetConstants.Players.PinkyPlayer);
                 // todo: update states
                 this.players.push(enemy);
@@ -107,8 +107,7 @@ export class Game {
         });
         this.platforms = game.add.group();
         this.platforms.classType = Platform;
-        const platformGenerator = new PlatformGenerator(game, this.platforms);
-        platformGenerator.generatePlatforms();
+        this.platforms = PlatformGenerator.generateRandomPlatforms(game.width, game.height, game);
 
         this.powerUps = game.add.group();
         const powerUpFactory = new PowerUpFactory(game, this.platforms);
@@ -125,6 +124,12 @@ export class Game {
     protected gameUpdate(game: Phaser.Game): void {
         if (this.player) {
             if (this.player.controls) {
+                // Allows players to stand on platforms
+                // Must be before update view so that it can update if player sprite is touching a platform
+                game.physics.arcade.collide(
+                    this.player.player,
+                    this.platforms
+                );
                 this.player.updateView();
                 window.socket.emit(PlayerEvents.coordinates, {
                     x: this.player.player.position.x,
@@ -139,11 +144,7 @@ export class Game {
                     this.player.player,
                     this.players.map(player => player.player)
                 );
-                // Allows players to stand on platforms
-                game.physics.arcade.collide(
-                    this.player.player,
-                    this.platforms
-                );
+
                 // Apply power up to player
                 game.physics.arcade.overlap(this.player.player, this.powerUps, (player: Phaser, powerUp: PowerUp) => {
                     powerUp.kill();
@@ -154,6 +155,7 @@ export class Game {
                 });
             }
         }
+
 
         // todo: Check if arrow has collided with a player an emit the event but first lets create an arrow class of some sort
         // todo: Then using the overlap method we need to check if the player has touched any arrows and emit that event and destroy the arrow sprite
