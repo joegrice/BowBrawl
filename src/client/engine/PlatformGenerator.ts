@@ -24,7 +24,7 @@ export class PlatformGenerator {
      * @param {number} noPlatforms
      * @return {Phaser.Group}
      */
-    generateRandomPlatforms(width: number, height: number, noPlatforms = 5): Phaser.Group {
+    generateRandomPlatforms(width: number, height: number, noPlatforms = 15): Phaser.Group {
         this._group.enableBody = true;
         this._group.physicsBodyType = Phaser.Physics.ARCADE;
 
@@ -32,7 +32,7 @@ export class PlatformGenerator {
         for (let i = 0; i <= noPlatforms; i++) {
             this.createPlatformAtUniqueLoc();
         }
-        this.readabilityTest();
+        this.reachableTest();
         this._group.setAll("body.allowGravity", false);
         this._group.setAll("body.immovable", true);
 
@@ -48,7 +48,11 @@ export class PlatformGenerator {
     private generateRandomXY(): Phaser.Point {
         const x = Phaser.Math.snapTo(this._game.world.randomX, this._gapX);
         const y = Phaser.Math.snapTo(this._game.world.randomY, this._gapY);
-
+        this.locArr.filter((s: number) => {
+            if (Phaser.Math.difference(s, s + this._platformHeight + this._platformHeight) < this._platformHeight + this._platformHeight) {
+                this.generateRandomXY();
+            }
+        });
         return new Phaser.Point(x, y);
     }
 
@@ -56,10 +60,16 @@ export class PlatformGenerator {
         const y = Phaser.Math.snapTo(Phaser.Math.between(betweenPointStart.y + this._platformHeight, betweenPointEnd.y), this._gapY);
         const x = Phaser.Math.snapTo(Phaser.Math.between(betweenPointStart.x + this._platformWidth, betweenPointEnd.x), this._gapX);
 
+        this.locArr.filter((s: number) => {
+            if (Phaser.Math.difference(s, s + this._platformHeight + this._platformHeight) < this._platformHeight + this._platformHeight) {
+                this.generateCoordinateXY(betweenPointStart, betweenPointEnd);
+            }
+        });
+
         return new Phaser.Point(x, y);
     }
 
-    private readabilityTest(): void {
+    private reachableTest(): void {
         let hasPassedReadabilityTest: boolean;
 
         for (let i = 0; i < this._group.length; i++) {
@@ -72,17 +82,39 @@ export class PlatformGenerator {
 
             if (closestSprite) {
                 const distance = Phaser.Math.difference(sprite.y, closestSprite.y);
-                if (distance > 125) {
+                if (distance > this._platformWidth + this._platformHeight) {
                     this.createPlatformAtUniqueLoc(new Phaser.Point(sprite.x, sprite.y), new Phaser.Point(closestSprite.x, closestSprite.y));
                 } else {
                     hasPassedReadabilityTest = true;
                 }
                 if (!hasPassedReadabilityTest) {
-                    this.readabilityTest();
+                    this.removeOverlappingPlatforms();
+                    this.reachableTest();
                 }
             }
             this._group.add(sprite);
         }
+    }
+
+    private removeOverlappingPlatforms() {
+        const groupLength = this._group.length;
+        for (let i = 0; i < groupLength; i++) {
+            const sprite = this._group.getAt(i) as Phaser.Sprite;
+            let closestSprite: Phaser.Sprite;
+
+            this._group.remove(sprite);
+            closestSprite = this._group.getClosestTo(sprite);
+
+            if (closestSprite) {
+                const xDifference = Phaser.Math.difference(closestSprite.x, sprite.x);
+                const yDifference = Phaser.Math.difference(closestSprite.y, sprite.y);
+
+                if (yDifference > this._platformHeight && xDifference > this._platformWidth) {
+                    this._group.add(sprite);
+                }
+            }
+        }
+
     }
 
     private createPlatformAtUniqueLoc(betweenPointStart?: Phaser.Point, betweenPointEnd?: Phaser.Point) {
