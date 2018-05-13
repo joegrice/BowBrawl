@@ -3,7 +3,6 @@ import { Controls } from "../controlls/Controls";
 import Physics = Phaser.Physics;
 import { Hud } from "../UI/Hud";
 import { Weapon } from "../weapon/Weapon";
-import { type } from "os";
 import { AssetConstants } from "../constants/AssetConstants";
 import { PlayerModel } from "../../shared/PlayerModel";
 import { PowerUpConfig } from "./PowerUpConfig";
@@ -12,7 +11,7 @@ export class Player {
     // Sprite should be variable of player in order to provide an interface to pass to server
     private _player: Phaser.Sprite;
     private _playerState: Map<PlayerStates, boolean | number>;
-    private _velocity = 300;
+    private _velocity = 600;
     private _controls: Controls;
     private _hud: Hud;
     private _weapon: Weapon;
@@ -117,5 +116,6 @@ export class Player {
         this.player.name = this.playerInstance.name;
         this.addPhysicsToPlayer(game);
         this._hud.setName(game, this.player);
+        this.player.scale.set(1.5);
     }
 }

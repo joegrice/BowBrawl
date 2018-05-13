@@ -1,18 +1,20 @@
-import { Platform } from "../actors/Platform";
 import { AssetConstants } from "../constants/AssetConstants";
-import { exists } from "fs";
-
 
 export class PlatformGenerator {
 
     private _game: Phaser.Game;
     private _group: Phaser.Group;
-    private readonly _platforWidth = 256;
+    private readonly _platformWidth = 256;
     private readonly _platformHeight = 64;
+    private readonly _gapX: number;
+    private readonly _gapY: number;
+    private locArr: number[] = [];
 
     constructor(game: Phaser.Game) {
         this._game = game;
         this._group = game.add.physicsGroup();
+        this._gapX = game.width / this._platformWidth;
+        this._gapY = game.height / this._platformHeight;
     }
 
     /**
@@ -23,59 +25,94 @@ export class PlatformGenerator {
      * @return {Phaser.Group}
      */
     generateRandomPlatforms(width: number, height: number, noPlatforms = 5): Phaser.Group {
-        const locArr: Phaser.Point[] = [];
         this._group.enableBody = true;
         this._group.physicsBodyType = Phaser.Physics.ARCADE;
-        for (let i = 0; i <= noPlatforms; i++) {
-            const point = new Phaser.Point(this._game.rnd.between(0, width), this._game.rnd.between(0, height));
-            if (locArr.length === 0) {
-                this._group.create(point.x, point.y, AssetConstants.Environment.Platform);
-                locArr.push(point);
-            } else {
-                this.generateNextPlatform(point);
-                locArr.push(point);
 
-            }
+        // Ensure no platforms overlap and generate random platforms
+        for (let i = 0; i <= noPlatforms; i++) {
+            this.createPlatformAtUniqueLoc();
         }
+        this.readabilityTest();
         this._group.setAll("body.allowGravity", false);
         this._group.setAll("body.immovable", true);
 
+
         return this._group;
+
+
+        // Do check to ensure player can reachable platforms
+        // First remove the platform we are checking from the list
+
     }
 
-    private generateNextPlatform(point: Phaser.Point) {
-        let nextWidth = 0;
-        let nextHeight = 0;
+    private generateRandomXY(): Phaser.Point {
+        const x = Phaser.Math.snapTo(this._game.world.randomX, this._gapX);
+        const y = Phaser.Math.snapTo(this._game.world.randomY, this._gapY);
 
-        // ensure platform not to far away
-        ensurePlayerCanReach(this);
-        // check out of bounds
-        checkOutOfBounds(this);
-        this._group.create(point.x, point.y, AssetConstants.Environment.Platform);
-        function ensurePlayerCanReach(self: PlatformGenerator) {
-            if (self._game.rnd.integerInRange(0, 1) === 1) {
-                nextHeight = point.y - self._platformHeight;
-                nextWidth = point.x - self._platforWidth;
+        return new Phaser.Point(x, y);
+    }
+
+    private generateCoordinateXY(betweenPointStart?: Phaser.Point, betweenPointEnd?: Phaser.Point): Phaser.Point {
+        const y = Phaser.Math.snapTo(Phaser.Math.between(betweenPointStart.y + this._platformHeight, betweenPointEnd.y), this._gapY);
+        const x = Phaser.Math.snapTo(Phaser.Math.between(betweenPointStart.x + this._platformWidth, betweenPointEnd.x), this._gapX);
+
+        return new Phaser.Point(x, y);
+    }
+
+    private readabilityTest(): void {
+        let hasPassedReadabilityTest: boolean;
+
+        for (let i = 0; i < this._group.length; i++) {
+            hasPassedReadabilityTest = false; // for every instance of the foreach loop this must return true
+            const sprite = this._group.getAt(i) as Phaser.Sprite;
+            let closestSprite: Phaser.Sprite;
+
+            this._group.remove(sprite);
+            closestSprite = this._group.getClosestTo(sprite);
+
+            if (closestSprite) {
+                const distance = Phaser.Math.difference(sprite.y, closestSprite.y);
+                if (distance > 125) {
+                    this.createPlatformAtUniqueLoc(new Phaser.Point(sprite.x, sprite.y), new Phaser.Point(closestSprite.x, closestSprite.y));
+                } else {
+                    hasPassedReadabilityTest = true;
+                }
+                if (!hasPassedReadabilityTest) {
+                    this.readabilityTest();
+                }
+            }
+            this._group.add(sprite);
+        }
+    }
+
+    private createPlatformAtUniqueLoc(betweenPointStart?: Phaser.Point, betweenPointEnd?: Phaser.Point) {
+        let index = 0;
+        let point: Phaser.Point;
+
+        do {
+            if (betweenPointStart && betweenPointEnd) {
+                point = this.generateCoordinateXY(betweenPointStart, betweenPointEnd);
             } else {
-                nextHeight = point.y + self._platformHeight;
-                nextWidth = point.x + self._platforWidth;
+                point = this.generateRandomXY();
             }
+            index = point.x + point.y;
         }
+        while (!this.checkProximity(index)) ;
+        this.locArr.push(index);
+        this._group.create(point.x, point.y, AssetConstants.Environment.Platform);
 
-        function checkOutOfBounds(self: PlatformGenerator) {
-            if (point.x - self._platforWidth < 0) {
-                nextWidth = point.x + self._platforWidth;
-            }
-            if (point.y - self._platformHeight < 0) {
-                nextHeight = point.y + self._platformHeight;
-            }
-            if (point.x + self._platforWidth > self._game.width) {
-                nextWidth = point.x - self._platforWidth;
-            }
-            if (point.y + self._platformHeight) {
-                nextHeight = point.y + self._platformHeight;
-            }
-        }
+    }
 
+
+    private checkProximity(index: number): boolean {
+        this.locArr.forEach(i => {
+            if (Phaser.Math.between(index, i + this._platformWidth + this._platformHeight)) {
+                return false;
+            }
+            if (Phaser.Math.between(index, i - this._platformWidth + this._platformHeight)) {
+                return false;
+            }
+        });
+        return true;
     }
 }

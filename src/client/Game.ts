@@ -42,6 +42,7 @@ export class Game {
         // a main  player is the player that owns the lobby
         // If we see that this has no semantic value can be changed to the general player event
         window.socket.on(PlayerEvents.protagonist, (player) => {
+
             this.player = new Player(game, player, AssetConstants.Players.PinkyPlayer);
             this.players.push(this.player);
         });
@@ -105,11 +106,15 @@ export class Game {
                 // todo: detect if player is firing and moving and add animations
             });
         });
-        this.platforms = game.add.group();
+        this.platforms = game.add.physicsGroup();
         this.platforms.classType = Platform;
         const platformGenerator = new PlatformGenerator(game);
         this.platforms = platformGenerator.generateRandomPlatforms(game.width, game.height);
-
+        this.platforms.forEach((p: Phaser.Sprite) => {
+            p.body.checkCollision.down = false;
+            p.body.checkCollision.left = false;
+            p.body.checkCollision.right = false;
+        }, this);
         this.powerUps = game.add.group();
         const powerUpFactory = new PowerUpFactory(game, this.platforms);
         this.powerUps.add(powerUpFactory.placePowerUp(AssetConstants.PowerUps.MovementSpeedBoost));
@@ -182,5 +187,6 @@ export class Game {
 
         game.renderer.clearBeforeRender = false;
         game.physics.startSystem(Phaser.Physics.ARCADE);
+        game.physics.arcade.gravity.set(0, 800);
     }
 }
