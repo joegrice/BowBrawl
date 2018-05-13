@@ -11,6 +11,7 @@ import { PlayerStates } from "./constants/PlayerStates";
 import { Login } from "./screens/login";
 import { PlayerModel } from "../shared/PlayerModel";
 import { PowerUpConfig } from "./actors/PowerUpConfig";
+import { Arrow } from "./actors/Arrow";
 
 declare const window: any; // This is necessary to get socket events!
 
@@ -60,9 +61,15 @@ export class Game {
                 this.players.push(enemy);
             });
         });
+
         window.socket.on(PlayerEvents.quit, (playerId) => {
             this.players.filter(player => player.player.id === playerId)
                 .map(player => player.player.kill()); // Destroy sprite in case player leaves game
+        });
+
+        window.socket.on(PlayerEvents.quit, (playerId) => {
+            this.players.filter(player => player.player.id === playerId)
+                .map(player => player.fire(game)); // Destroy sprite in case player leaves game
         });
 
         window.socket.on(GameEvents.drop, (coors) => {
@@ -158,6 +165,11 @@ export class Game {
                         player: this.player,
                         powerUpConfig: powerUp
                     });
+                });
+
+                // Bullet hits platform
+                game.physics.arcade.overlap(this.player.ammo, this.platforms, (arrow: Arrow, platform: Platform) => {
+                    arrow.kill();
                 });
             }
         }

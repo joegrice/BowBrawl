@@ -30,6 +30,7 @@ export class Controls {
             }
 
             if (this.controls.mouse.leftButton.isDown) {
+                this.playerInstance.fire(this.gameInstance);
                 this.playerInstance.playerState.set(PlayerStates.Shooting, true);
             }
         }

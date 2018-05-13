@@ -1,31 +1,35 @@
 import { AssetConstants } from "../constants/AssetConstants";
 import Physics = Phaser.Physics;
+import { Events } from "../../shared/Events";
+import PlayerEvents = Events.PlayerEvents;
 
-export class Arrow {
+declare const window: any; // This is necessary to get socket events!
 
-    private _sprite: Phaser.Sprite;
+export class Arrow extends Phaser.Sprite {
+
     private _game: Phaser.Game;
+    private readonly _playerId: number;
 
-    constructor(game: Phaser.Game, x: number, y: number) {
+    constructor(game: Phaser.Game, x: number, y: number, playerid: number) {
+        super(game, x, y, AssetConstants.Projectiles.Arrow);
         this._game = game;
-
-        this._sprite = this.createSprite(x, y);
-    }
-
-    createSprite(x: number, y: number): Phaser.Sprite {
-        const sprite = this._game.add.sprite(x, y, AssetConstants.Projectiles.Arrow);
-        this._game.physics.enable(sprite, Physics.ARCADE);
-        sprite.checkWorldBounds = true;
-        sprite.outOfBoundsKill = true;
-        sprite.body.enable = true;
-        sprite.exists = false;
-        sprite.alive = false;
-        sprite.body.allowRotation = false;
-        sprite.anchor.set(0.5);
-        return sprite;
+        this._playerId = playerid;
+        this._game.physics.enable(this, Physics.ARCADE);
+        this.checkWorldBounds = true;
+        this.outOfBoundsKill = true;
+        this.body.enable = true;
+        this.body.allowGravity = false;
+        this.exists = false;
+        this.alive = false;
+        this.body.allowRotation = false;
+        this.anchor.set(0.5);
     }
 
     fire(game: Phaser.Game, speed: number) {
-        this._sprite.rotation = game.physics.arcade.moveToPointer(this, speed);
+        this.rotation = game.physics.arcade.moveToPointer(this, speed);
+        window.socket.emit(PlayerEvents.arrowfire, {
+            playerId: this._playerId,
+            arrow: this
+        });
     }
 }
