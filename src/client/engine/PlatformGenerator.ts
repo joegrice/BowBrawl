@@ -98,24 +98,13 @@ export class PlatformGenerator {
     }
 
     private removeOverlappingPlatforms() {
-        const groupLength = this._group.length;
-        for (let i = 0; i < groupLength; i++) {
-            const sprite = this._group.getAt(i) as Phaser.Sprite;
-            let closestSprite: Phaser.Sprite;
-
-            this._group.remove(sprite);
-            closestSprite = this._group.getClosestTo(sprite);
-
-            if (closestSprite) {
-
-                if (!sprite.overlap(closestSprite)) {
-                    this._group.add(sprite);
-                } else {
-                    sprite.body.kill();
-                }
-            }
-        }
-
+        this._group.forEach((p: Phaser.Sprite) => {
+           this._group.forEach((s: Phaser.Sprite) => {
+               if (p.overlap(s)) {
+                   s.kill();
+               }
+           }, this);
+        }, this);
     }
 
     private createPlatformAtUniqueLoc(betweenPointStart?: Phaser.Point, betweenPointEnd?: Phaser.Point) {
