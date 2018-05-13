@@ -107,7 +107,8 @@ export class Game {
         });
         this.platforms = game.add.group();
         this.platforms.classType = Platform;
-        this.platforms = PlatformGenerator.generateRandomPlatforms(game.width, game.height, game);
+        const platformGenerator = new PlatformGenerator(game);
+        this.platforms = platformGenerator.generateRandomPlatforms(game.width, game.height);
 
         this.powerUps = game.add.group();
         const powerUpFactory = new PowerUpFactory(game, this.platforms);
