@@ -49,7 +49,7 @@ export class PlatformGenerator {
         const x = Phaser.Math.snapTo(this._game.world.randomX, this._gapX);
         const y = Phaser.Math.snapTo(this._game.world.randomY, this._gapY);
         this.locArr.filter((s: number) => {
-            if (Phaser.Math.difference(s, s + this._platformHeight + this._platformHeight) < this._platformHeight + this._platformHeight) {
+            if (Phaser.Math.difference(s, s + this._platformWidth + this._platformHeight) < this._platformWidth + this._platformHeight) {
                 this.generateRandomXY();
             }
         });
@@ -82,14 +82,15 @@ export class PlatformGenerator {
 
             if (closestSprite) {
                 const distance = Phaser.Math.difference(sprite.y, closestSprite.y);
-                if (distance > this._platformWidth + this._platformHeight) {
+                if (distance > 500) {
                     this.createPlatformAtUniqueLoc(new Phaser.Point(sprite.x, sprite.y), new Phaser.Point(closestSprite.x, closestSprite.y));
                 } else {
                     hasPassedReadabilityTest = true;
                 }
                 if (!hasPassedReadabilityTest) {
-                    this.removeOverlappingPlatforms();
                     this.reachableTest();
+                    this.removeOverlappingPlatforms();
+
                 }
             }
             this._group.add(sprite);
@@ -106,11 +107,11 @@ export class PlatformGenerator {
             closestSprite = this._group.getClosestTo(sprite);
 
             if (closestSprite) {
-                const xDifference = Phaser.Math.difference(closestSprite.x, sprite.x);
-                const yDifference = Phaser.Math.difference(closestSprite.y, sprite.y);
 
-                if (yDifference > this._platformHeight && xDifference > this._platformWidth) {
+                if (!sprite.overlap(closestSprite)) {
                     this._group.add(sprite);
+                } else {
+                    sprite.body.kill();
                 }
             }
         }
@@ -135,16 +136,14 @@ export class PlatformGenerator {
 
     }
 
-
     private checkProximity(index: number): boolean {
-        this.locArr.forEach(i => {
-            if (Phaser.Math.between(index, i + this._platformWidth + this._platformHeight)) {
-                return false;
-            }
-            if (Phaser.Math.between(index, i - this._platformWidth + this._platformHeight)) {
-                return false;
-            }
+        let pass = false;
+        const platformIndex = this._platformWidth + this._platformHeight;
+        this.locArr.filter((i: number) => {
+            const platformDifference = Phaser.Math.difference(index, i + this._platformWidth + this._platformHeight);
+            pass = platformDifference >= platformIndex;
         });
-        return true;
+        if (this.locArr.length === 0) pass = true;
+        return pass;
     }
 }
