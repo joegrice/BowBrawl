@@ -28,21 +28,19 @@ export class PlatformGenerator {
         this._group.enableBody = true;
         this._group.physicsBodyType = Phaser.Physics.ARCADE;
 
-        // Ensure no platforms overlap and generate random platforms
+        // Create random platforms
         for (let i = 0; i <= noPlatforms; i++) {
             this.createPlatformAtUniqueLoc();
         }
+
+        // Check platforms can be reached
         this.reachableTest();
+        // Remove overlapping at end so more aren't added after
+        this.removeOverlappingPlatforms();
+
         this._group.setAll("body.allowGravity", false);
         this._group.setAll("body.immovable", true);
-
-
         return this._group;
-
-
-        // Do check to ensure player can reachable platforms
-        // First remove the platform we are checking from the list
-
     }
 
     private generateRandomXY(): Phaser.Point {
@@ -89,7 +87,7 @@ export class PlatformGenerator {
                 }
                 if (!hasPassedReadabilityTest) {
                     this.reachableTest();
-                    this.removeOverlappingPlatforms();
+                    // this.removeOverlappingPlatforms();
 
                 }
             }
@@ -100,7 +98,7 @@ export class PlatformGenerator {
     private removeOverlappingPlatforms() {
         this._group.forEach((p: Phaser.Sprite) => {
            this._group.forEach((s: Phaser.Sprite) => {
-               if (p.overlap(s)) {
+               if (this._game.physics.arcade.overlap(p, s)) {
                    s.kill();
                }
            }, this);
