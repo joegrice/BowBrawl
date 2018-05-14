@@ -144,10 +144,10 @@ class GameServer {
 
     private addPowerUpListener(socket) {
         // Player collects power up item
-        socket.on(PlayerEvents.powerup, (player: PlayerModel) => {
-            socket.player.activePowerUp = player.activePowerUp;
+        socket.on(PlayerEvents.powerup, (playerid: string, powerup: string) => {
+            socket.player.activePowerUp = powerup;
             console.info(socket.player.activePowerUp);
-            socket.broadcast.emit(PlayerEvents.powerup, player.id, player.activePowerUp);
+            socket.broadcast.emit(PlayerEvents.powerup, playerid, powerup);
         });
     }
 

@@ -228,10 +228,7 @@ export class Game {
                 // Apply power up to player
                 game.physics.arcade.overlap(this.player.player, this.powerUps, (player, powerUp) => {
                     powerUp.kill();
-                    window.socket.emit(PlayerEvents.powerup, {
-                        id: this.player.player.id
-
-                    });
+                    window.socket.emit(PlayerEvents.powerup, this.player.player.id, powerUp.name);
                 }, undefined, this);
                 this.platforms.forEach((p: Phaser.Sprite) => {
                     p.body.checkCollision.down = false;
