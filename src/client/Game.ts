@@ -43,9 +43,11 @@ export class Game {
 
         window.socket.on(PlayerEvents.joined, (player, powerUpList: PowerUpModel[]) => {
             this.players.push(new Player(game, player, AssetConstants.Players.PinkyPlayer));
-            powerUpList.forEach(p => {
-                powerUpFactory.placePowerUp(p.name, p.x, p.y);
-            });
+            if (powerUpList) {
+                powerUpList.forEach(p => {
+                    powerUpFactory.placePowerUp(p.name, p.x, p.y);
+                });
+            }
         });
 
         window.socket.on(GameEvents.drop, (coors: { x: number, y: number, powerUp: string }) => {
@@ -167,6 +169,8 @@ export class Game {
                 // todo: detect if player is firing and moving and add animations
             });
         });
+        this.firedArrows = game.add.physicsGroup();
+        this.firedArrows.classType = Arrow;
     }
 
     /**

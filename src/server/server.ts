@@ -128,7 +128,7 @@ class GameServer {
             socket.emit(PlayerEvents.players, this.getAllPlayers());
             this.createPlayer(socket, player, gameSize);
             socket.emit(PlayerEvents.protagonist, socket.player, this._gameHasStarted, this.platformLocations ? this.platformLocations : undefined);
-            socket.broadcast.emit(PlayerEvents.joined, {player: socket.player}, {powerUpList: this.powerUps});
+            socket.broadcast.emit(PlayerEvents.joined, socket.player, this.powerUps);
             this.gameInitialised(socket);
         });
     }
