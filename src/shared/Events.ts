@@ -25,5 +25,6 @@ export namespace Events {
         public static powerup = "player:powerup";
         public static arrowfire = "player:arrowfire";
         public static death = "player:death";
+        static powerPickup = "pickup:powerup";
     }
 }

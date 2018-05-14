@@ -5,12 +5,13 @@ import PlayerEvents = Events.PlayerEvents;
 import { setInterval } from "timers";
 import GameEvents = Events.GameEvents;
 import { PlayerModel } from "../shared/PlayerModel";
-import { PowerUpConfig } from "../client/actors/PowerUpConfig";
+import { PowerUpConfig } from "../shared/PowerUpConfig";
 import { SharedConstants } from "../shared/Constants";
 import { EnumUtils } from "../shared/EnumUtils";
 import { PowerUpModel } from "../shared/PowerUpModel";
 import { Arrow } from "../client/actors/Arrow";
 import { Player } from "../client/actors/Player";
+import { PowerUpGenerator } from "./PowerUpGenerator";
 
 const uuid = require("uuid");
 
@@ -31,10 +32,12 @@ class GameServer {
     private powerUps: PowerUpModel[] = [];
     private platformLocations: string;
     private players: PlayerModel[];
+    private powerUpGetter: PowerUpGenerator;
 
     constructor() {
         this.socketEvents();
         this.players = [];
+        this.powerUpGetter = new PowerUpGenerator();
     }
 
     public connect(port): void {
@@ -103,8 +106,10 @@ class GameServer {
         setInterval(() => {
             if (this.powerUps.length < 2) {
                 const coordinates = this.generateCoordinates();
-                io.sockets.emit(GameEvents.drop, coordinates);
-                this.powerUps.push({x: coordinates.x, y: coordinates.y, name: coordinates.powerUp});
+                const id = uuid();
+
+                io.sockets.emit(GameEvents.drop, {x: coordinates.x, y: coordinates.y, powerUp: coordinates.powerUp, id});
+                this.powerUps.push({x: coordinates.x, y: coordinates.y, name: coordinates.powerUp, id});
             }
         }, interval);
 
@@ -127,8 +132,8 @@ class GameServer {
         socket.on(GameEvents.authentication, (player, gameSize) => {
             socket.emit(PlayerEvents.players, this.getAllPlayers());
             this.createPlayer(socket, player, gameSize);
-            socket.emit(PlayerEvents.protagonist, socket.player, this._gameHasStarted, this.platformLocations ? this.platformLocations : undefined);
-            socket.broadcast.emit(PlayerEvents.joined, socket.player, this.powerUps);
+            socket.emit(PlayerEvents.protagonist, socket.player, this._gameHasStarted, this.platformLocations ? this.platformLocations : undefined, this.powerUps);
+            socket.broadcast.emit(PlayerEvents.joined, socket.player);
             this.gameInitialised(socket);
         });
     }
@@ -144,10 +149,16 @@ class GameServer {
 
     private addPowerUpListener(socket) {
         // Player collects power up item
-        socket.on(PlayerEvents.powerup, (playerid: string, powerup: string) => {
-            socket.player.activePowerUp = powerup;
-            console.info(socket.player.activePowerUp);
-            socket.broadcast.emit(PlayerEvents.powerup, playerid, powerup);
+        socket.on(PlayerEvents.powerup, (playerid: string, powerup: string, powerupId: string) => {
+            const powerupConfig = this.powerUpGetter.getPowerUp(powerup);
+            const index = this.powerUps.indexOf(this.powerUps.find(p => p.id === powerupId), 0);
+
+            if (index > -1) {
+                this.powerUps.splice(index, 1);
+            }
+
+            socket.player.activePowerUp = powerupConfig;
+            io.sockets.emit(PlayerEvents.powerPickup, playerid, powerupConfig, powerupId);
         });
     }
 

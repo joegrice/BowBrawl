@@ -5,7 +5,8 @@ import { Hud } from "../UI/Hud";
 import { Weapon } from "../weapon/Weapon";
 import { AssetConstants } from "../constants/AssetConstants";
 import { PlayerModel } from "../../shared/PlayerModel";
-import { PowerUpConfig } from "./PowerUpConfig";
+import { PowerUpConfig } from "../../shared/PowerUpConfig";
+import { SharedConstants } from "../../shared/Constants";
 
 export class Player {
     // Sprite should be variable of player in order to provide an interface to pass to server
@@ -49,11 +50,6 @@ export class Player {
         this._velocity += config.velocity;
         this._player.body.gravity.y -= config.gravity;
         this._player.health += config.health;
-    }
-
-    public pickupWeapon() {
-        // todo: When user picks up new weapon
-        throw new Error("Function not implemented");
     }
 
     // Setters and Getters
