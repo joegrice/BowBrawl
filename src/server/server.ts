@@ -86,8 +86,8 @@ class GameServer {
 
     private addArrowFireListener(socket) {
         socket.on(PlayerEvents.arrowfire, (coords) => {
-            console.log("SERVER: ARROW FIRED FROM X:" + coords.playerX + " Y:" + coords.playerY + ", TO: X:" + coords.mouseX + " Y: " + coords.mouseY);
-            socket.broadcast.emit(PlayerEvents.arrowfire, coords.playerX, coords.playerY, coords.mouseX, coords.mouseY);
+            console.log("SERVER: ARROW FIRED BY: " + coords.playerId + " FROM X:" + coords.playerX + " Y:" + coords.playerY + ", TO: X:" + coords.mouseX + " Y: " + coords.mouseY);
+            socket.broadcast.emit(PlayerEvents.arrowfire, coords.playerId, coords.playerX, coords.playerY, coords.mouseX, coords.mouseY);
         });
     }
 
