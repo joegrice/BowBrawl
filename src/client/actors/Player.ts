@@ -6,7 +6,6 @@ import { Weapon } from "../weapon/Weapon";
 import { AssetConstants } from "../constants/AssetConstants";
 import { PlayerModel } from "../../shared/PlayerModel";
 import { PowerUpConfig } from "./PowerUpConfig";
-import { Arrow } from "./Arrow";
 
 export class Player {
     // Sprite should be variable of player in order to provide an interface to pass to server
@@ -18,7 +17,7 @@ export class Player {
     private _weapon: Weapon;
     private _fireSpeed = 600;
     private _nextFire = 0;
-    private _ammo: Phaser.Group;
+    private _ammo = 3;
     private _fireRate = 200;
     // Power ups should be indicated in states?
     // private _powerUpActive: boolean;
@@ -43,17 +42,6 @@ export class Player {
 
     public updateView(): void {
         this.controls.update();
-    }
-
-    public fire(game: Phaser.Game) {
-        if (game.time.now > this._nextFire && this._ammo.length > 0) {
-            this._nextFire = game.time.now + this._fireRate;
-            const arrow = this._ammo.getFirstDead();
-            if (arrow !== null) {
-                arrow.reset(this._player.x, this._player.y);
-                arrow.fire(game, this._fireSpeed);
-            }
-        }
     }
 
     public applyPowerUp(config: PowerUpConfig) {
@@ -97,21 +85,38 @@ export class Player {
         this._player = value;
     }
 
-    get ammo(): Phaser.Group {
+    get ammo(): number {
         return this._ammo;
     }
 
-    set ammo(value: Phaser.Group) {
+    set ammo(value: number) {
         this._ammo = value;
     }
 
-    private addAmmo(game: Phaser.Game) {
-        this._ammo = game.add.group();
-        this._ammo.classType = Arrow;
-        for (let i = 0; i < 5; i++) {
-            const arrow: Arrow = new Arrow(game, 0, 0);
-            this._ammo.add(arrow);
-        }
+    get fireSpeed(): number {
+        return this._fireSpeed;
+    }
+
+    set fireSpeed(value: number) {
+        this._fireSpeed = value;
+    }
+
+    public firedArrow() {
+        this._ammo -= 1;
+        this._hud.updateAmmo(this._ammo);
+    }
+
+    public hit(damage: number) {
+        this.player.damage(damage);
+        this._hud.updateHealth(this.player.health);
+    }
+
+    public death() {
+        this.player.alive = false;
+        this.player.exists = false;
+        this.player.visible = false;
+        this.player.kill();
+        this.player.destroy(true);
     }
 
     private createPlayer(game: Phaser.Game, type: any) {
@@ -120,12 +125,15 @@ export class Player {
         console.log(this.playerInstance);
         this.player = game.add.sprite(this.playerInstance.x, this.playerInstance.y, type);
         this.player.id = this.playerInstance.id;
+        this.player.health = 10;
         this.player.anchor.set(0.5, 0.5);
         // add animations
         this.player.name = this.playerInstance.name;
         this.addPhysicsToPlayer(game);
+        // this.addAmmo(game);
         this._hud.setName(game, this.player);
+        this._hud.setAmmo(game, this.player, this._ammo);
+        this._hud.setHealth(game, this.player);
         this.player.scale.set(1.5);
-        this.addAmmo(game);
     }
 }

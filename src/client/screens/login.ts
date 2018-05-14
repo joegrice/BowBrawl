@@ -31,6 +31,7 @@ export class Login {
         this._input = document.createElement("input");
         this._input.setAttribute("type", "text");
         this._input.placeholder = "username";
+        this._input.maxLength = 6;
         this._input.id = "your-name";
         this._input.focus();
 

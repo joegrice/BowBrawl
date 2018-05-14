@@ -3,5 +3,6 @@ export interface PlayerModel {
     name: string;
     x: number;
     y: number;
-
+    ammo: number;
+    health: number;
 }

@@ -23,5 +23,6 @@ export namespace Events {
         public static coordinates = "player:coordinates";
         public static powerup = "player:powerup";
         public static arrowfire = "player:arrowfire";
+        public static death = "player:death";
     }
 }

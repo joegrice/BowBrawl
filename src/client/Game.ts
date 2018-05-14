@@ -21,6 +21,7 @@ export class Game {
     private player: Player;
     private platforms: Phaser.Group;
     private powerUps: Phaser.Group;
+    private firedArrows: Phaser.Group;
     private login: Login;
 
     constructor() {
@@ -43,7 +44,6 @@ export class Game {
         // a main  player is the player that owns the lobby
         // If we see that this has no semantic value can be changed to the general player event
         window.socket.on(PlayerEvents.protagonist, (player) => {
-
             this.player = new Player(game, player, AssetConstants.Players.PinkyPlayer);
             this.players.push(this.player);
         });
@@ -67,11 +67,6 @@ export class Game {
                 .map(player => player.player.kill()); // Destroy sprite in case player leaves game
         });
 
-        window.socket.on(PlayerEvents.quit, (playerId) => {
-            this.players.filter(player => player.player.id === playerId)
-                .map(player => player.fire(game)); // Destroy sprite in case player leaves game
-        });
-
         window.socket.on(GameEvents.drop, (coors) => {
             // The server will be causing arrows to drop every n seconds
             // When this happen act upon
@@ -81,17 +76,37 @@ export class Game {
             }
             // todo: sudo: Create arrows
         });
-        window.socket.on(PlayerEvents.hit, (enemy) => {
-            // Detect which player was hit
-            // reload their client so that health updates
-            // todo: Implementation
 
+        // Player hit by arrow
+        window.socket.on(PlayerEvents.hit, (playerId: string, damage: number) => {
+            this.players.filter(actor => actor.player.id === playerId).map(player => {
+                player.hit(damage);
+            });
         });
+
+        // Player fired arrow
+        window.socket.on(PlayerEvents.arrowfire, (playerX: number, playerY: number, mouseX: number, mouseY: number) => {
+            const arrow = new Arrow(game, playerX, playerY);
+            game.add.existing(arrow);
+            this.firedArrows.add(arrow);
+            arrow.fire(game, this.player.fireSpeed, mouseX, mouseY);
+        });
+
+        // Player collected power up
         window.socket.on(PlayerEvents.powerup, (player: Player, powerUpConfig: PowerUpConfig) => {
             this.players.filter(actor => actor.player.id === player.player.id).map(player => {
                 player.applyPowerUp(powerUpConfig);
             });
         });
+
+        // Player died
+        window.socket.on(PlayerEvents.death, (playerId: string) => {
+            this.players.filter(actor => actor.player.id === playerId).map((player: Player) => {
+                player.death();
+            });
+        });
+
+        // Player picks up item
         window.socket.on(PlayerEvents.pickup, (player) => {
             // Once arrows have been picked up
             // Assign them to the user that has picked them up
@@ -113,6 +128,8 @@ export class Game {
                 // todo: detect if player is firing and moving and add animations
             });
         });
+        this.firedArrows = game.add.physicsGroup();
+        this.firedArrows.classType = Arrow;
         this.platforms = game.add.physicsGroup();
         this.platforms.classType = Platform;
         const platformGenerator = new PlatformGenerator(game);
@@ -152,6 +169,25 @@ export class Game {
                     m: this.player.playerState.get(PlayerStates.IsMoving),
                     a: this.player.playerState.get(PlayerStates.AMMO)
                 });
+
+                // Fire bullet
+                if (this.player.playerState.get(PlayerStates.Shooting)) {
+                    if (this.player.ammo > 0) {
+                        console.log("FIRE ARROW");
+                        const arrow = new Arrow(game, this.player.player.x, this.player.player.y);
+                        game.add.existing(arrow);
+                        arrow.fire(game, this.player.fireSpeed, game.input.activePointer.x, game.input.activePointer.y);
+                        this.player.firedArrow();
+                        this.player.playerState.set(PlayerStates.Shooting, false);
+                        window.socket.emit(PlayerEvents.arrowfire, {
+                            playerX: this.player.player.x,
+                            playerY: this.player.player.y,
+                            mouseX: game.input.activePointer.x,
+                            mouseY: game.input.activePointer.y
+                        });
+                    }
+                }
+
                 // Further check to see if any player has collided with a player we bounce them off
                 game.physics.arcade.collide(
                     this.player.player,
@@ -167,9 +203,13 @@ export class Game {
                     });
                 });
 
-                // Bullet hits platform
-                game.physics.arcade.overlap(this.player.ammo, this.platforms, (arrow: Arrow, platform: Platform) => {
-                    arrow.kill();
+                // Hit by bullet
+                game.physics.arcade.collide(this.player.player, this.firedArrows, (player: Phaser.Sprite, arrow: Arrow) => {
+                    window.socket.emit(PlayerEvents.hit, {
+                        playerId: this.player.player.id,
+                        damage: arrow.damageValue
+                    });
+                    arrow.destroy(true);
                 });
             }
         }
@@ -185,7 +225,7 @@ export class Game {
          }, undefined, this);
 
          if (this.player && this.player.controls) {
-             this.player.updateView();
+    /         this.player.updateView();
          }*/
     }
 

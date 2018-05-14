@@ -23,14 +23,13 @@ export class Controls {
             }
             if (this.controls.cursors.left.isDown) {
                 this.playerInstance.player.body.velocity.x = -vel;
-            } else if (this.controls.cursors.right.isDown) {
+            } else if (this.    controls.cursors.right.isDown) {
                 this.playerInstance.player.body.velocity.x = vel;
             } else {
                 this.playerInstance.player.body.velocity.x = 0;
             }
 
-            if (this.controls.mouse.leftButton.isDown) {
-                this.playerInstance.fire(this.gameInstance);
+            if (this.controls.mouse.leftButton.justPressed(30)) {
                 this.playerInstance.playerState.set(PlayerStates.Shooting, true);
             }
         }

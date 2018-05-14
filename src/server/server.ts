@@ -6,6 +6,8 @@ import { setInterval } from "timers";
 import GameEvents = Events.GameEvents;
 import { PlayerModel } from "../shared/PlayerModel";
 import { PowerUpConfig } from "../client/actors/PowerUpConfig";
+import { Arrow } from "../client/actors/Arrow";
+import { Player } from "../client/actors/Player";
 
 const uuid = require("uuid");
 
@@ -23,9 +25,11 @@ app.get("/", (req, res) => {
 class GameServer {
 
     private _gameHasStarted = false;
+    private players: PlayerModel[];
 
     constructor() {
         this.socketEvents();
+        this.players = [];
     }
 
     public connect(port): void {
@@ -45,15 +49,41 @@ class GameServer {
         this.addSignOnListener(socket);
         this.addMovementListener(socket);
         this.addSignOutListener(socket);
+        this.addArrowFireListener(socket);
         this.addHitListener(socket);
+        // this.addDeathListener(socket);
         this.addPickupListener(socket);
         this.addPowerUpListener(socket);
     }
-    private addHitListener(socket: Socket) {
-        socket.on(PlayerEvents.hit, (playerId) => {
-            socket.broadcast.emit(PlayerEvents.hit, playerId);
+
+    private addHitListener(socket) {
+        socket.on(PlayerEvents.hit, (hit) => {
+            const p = this.players.find(p => p.id === hit.playerId);
+            p.health -= hit.damage;
+            if (p.health > 0) {
+                console.log("SERVER: PLAYER HIT, ID: " + hit.playerId);
+                io.sockets.emit(PlayerEvents.hit, hit.playerId, hit.damage);
+            } else if (p.health <= 0) {
+                console.log("SERVER: PLAYER DIED, ID: " + hit.playerId);
+                io.sockets.emit(PlayerEvents.death, hit.playerId);
+            }
         });
     }
+
+    /* private addDeathListener(socket) {
+        socket.on(PlayerEvents.death, (player) => {
+            console.log("SERVER: PLAYER DIED, ID:" + player.id);
+            socket.broadcast.emit(PlayerEvents.death, player.id);
+        });
+    }*/
+
+    private addArrowFireListener(socket) {
+        socket.on(PlayerEvents.arrowfire, (coords) => {
+            console.log("SERVER: ARROW FIRED FROM X:" + coords.playerX + " Y:" + coords.playerY + ", TO: X:" + coords.mouseX + " Y: " + coords.mouseY);
+            socket.broadcast.emit(PlayerEvents.arrowfire, coords.playerX, coords.playerY, coords.mouseX, coords.mouseY);
+        });
+    }
+
     private gameInitialised(socket: Socket): void {
         // Start game on first user login
         if (!this._gameHasStarted) {
@@ -68,17 +98,19 @@ class GameServer {
             socket.emit(GameEvents.drop, coordinates);
             socket.broadcast.emit(GameEvents.drop, coordinates);
         }, interval);
-
     }
 
     private createPlayer(socket, player: PlayerModel, windowSize: { x, y }): void {
-        socket.player = {
+        const playerModel: PlayerModel = {
             name: player.name,
             id: uuid(),
-            ammo: 0,
+            ammo: 3,
             x: this.randomInt(0, windowSize.x),
-            y: this.randomInt(0, windowSize.y)
+            y: this.randomInt(0, windowSize.y),
+            health: 10
         };
+        socket.player = playerModel;
+        this.players.push(playerModel);
     }
 
     private addSignOnListener(socket) {
@@ -124,11 +156,9 @@ class GameServer {
         });
     }
 
-
-    private get players(): number {
+    /* private get players(): number {
         return Object.keys(io.sockets.connected).length;
-    }
-
+    }*/
 
     private generateCoordinates(): { x: number, y: number } {
         return {
