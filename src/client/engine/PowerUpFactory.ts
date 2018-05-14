@@ -11,8 +11,9 @@ export class PowerUpFactory {
         this._powerGroup.enableBody = true;
     }
 
-    placePowerUp(name: string, x: number, y: number) {
+    placePowerUp(name: string, x: number, y: number, id: string) {
         const powerUp = new PowerUp(this._game, x, y, name);
+        powerUp.id = id;
         this._game.add.existing(powerUp);
         this._powerGroup.add(powerUp);
     }

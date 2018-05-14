@@ -9,6 +9,7 @@ import GameEvents = Events.GameEvents;
 import { PlayerStates } from "./constants/PlayerStates";
 import { Login } from "./screens/login";
 import { PlayerModel } from "../shared/PlayerModel";
+import { PowerUpConfig } from "../shared/PowerUpConfig";
 import { Arrow } from "./actors/Arrow";
 import { SharedConstants } from "../shared/Constants";
 import { PowerUpModel } from "../shared/PowerUpModel";
@@ -60,17 +61,12 @@ export class Game extends Phaser.State {
 
         const powerUpFactory = new PowerUpFactory(game, this.powerUps);
 
-        window.socket.on(PlayerEvents.joined, (player, powerUpList: PowerUpModel[]) => {
+        window.socket.on(PlayerEvents.joined, (player) => {
             this.players.push(new Player(game, player, AssetConstants.Players.PinkyPlayer));
-            if (powerUpList) {
-                powerUpList.forEach(p => {
-                    powerUpFactory.placePowerUp(p.name, p.x, p.y);
-                });
-            }
         });
 
-        window.socket.on(GameEvents.drop, (coors: { x: number, y: number, powerUp: string }) => {
-            powerUpFactory.placePowerUp(coors.powerUp, coors.x, coors.y);
+        window.socket.on(GameEvents.drop, (coors: { x: number, y: number, powerUp: string, id: string }) => {
+            powerUpFactory.placePowerUp(coors.powerUp, coors.x, coors.y, coors.id);
         });
 
         window.socket.on(GameEvents.roundover, (players: PlayerModel[]) => {
@@ -80,12 +76,18 @@ export class Game extends Phaser.State {
         // Creating a new event for the main player?
         // a main  player is the player that owns the lobby
         // If we see that this has no semantic value can be changed to the general player event
-        window.socket.on(PlayerEvents.protagonist, (player, isGameInitialised: boolean, platformLocs) => {
+        window.socket.on(PlayerEvents.protagonist, (player, isGameInitialised: boolean, platformLocs, powerUpList: PowerUpModel[]) => {
             this.player = new Player(game, player, AssetConstants.Players.PinkyPlayer);
             this.platforms = game.add.physicsGroup();
             this.platforms.classType = Platform;
 
             this.players.push(this.player);
+            if (powerUpList) {
+                powerUpList.forEach(p => {
+                    powerUpFactory.placePowerUp(p.name, p.x, p.y, p.id);
+                });
+            }
+
             if (platformLocs) {
                 const locations: Phaser.Point[] = JSON.parse(platformLocs);
                 locations.forEach(loc => {
@@ -158,10 +160,13 @@ export class Game extends Phaser.State {
         });
 
         // Player collected power up
-        window.socket.on(PlayerEvents.powerup, (playerid: string, powerup: SharedConstants.PowerUp) => {
+        window.socket.on(PlayerEvents.powerPickup, (playerid: string, powerup: PowerUpConfig, pId: string) => {
             this.players.filter(p => p.player.id === playerid).map(p => {
-                //
+                p.applyUp(powerup);
             });
+            const pp = this.powerUps.filter(p => p.id === pId).first;
+            console.log(pp);
+            this.powerUps.remove(pp, true);
         });
 
         // Player died
@@ -254,7 +259,7 @@ export class Game extends Phaser.State {
                 // Apply power up to player
                 game.physics.arcade.overlap(this.player.player, this.powerUps, (player, powerUp) => {
                     powerUp.kill();
-                    window.socket.emit(PlayerEvents.powerup, this.player.player.id, powerUp.name);
+                    window.socket.emit(PlayerEvents.powerup, this.player.player.id, powerUp.key, powerUp.id);
                 }, undefined, this);
                 this.platforms.forEach((p: Phaser.Sprite) => {
                     p.body.checkCollision.down = false;
