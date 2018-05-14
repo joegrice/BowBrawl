@@ -1,9 +1,10 @@
 export namespace Events {
     export class GameEvents {
         public static authentication = "authentication:successful";
-        public static end: "game:over";
-        public static start: "game:start";
-        public static drop: "drop";
+        public static end = "game:over";
+        public static start = "game:start";
+        public static drop = "game:drop";
+        static platformsCreated = "platformsCreated";
     }
     export class ServerEvents {
         public static connected = "connection";

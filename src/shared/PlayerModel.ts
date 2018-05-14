@@ -5,4 +5,5 @@ export interface PlayerModel {
     y: number;
     ammo: number;
     health: number;
+    activePowerUp: string;
 }

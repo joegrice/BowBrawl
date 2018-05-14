@@ -6,6 +6,9 @@ import { setInterval } from "timers";
 import GameEvents = Events.GameEvents;
 import { PlayerModel } from "../shared/PlayerModel";
 import { PowerUpConfig } from "../client/actors/PowerUpConfig";
+import { SharedConstants } from "../shared/Constants";
+import { EnumUtils } from "../shared/EnumUtils";
+import { PowerUpModel } from "../shared/PowerUpModel";
 import { Arrow } from "../client/actors/Arrow";
 import { Player } from "../client/actors/Player";
 
@@ -25,6 +28,8 @@ app.get("/", (req, res) => {
 class GameServer {
 
     private _gameHasStarted = false;
+    private powerUps: PowerUpModel[] = [];
+    private platformLocations: string;
     private players: PlayerModel[];
 
     constructor() {
@@ -45,7 +50,6 @@ class GameServer {
     }
 
     private attachListeners(socket: Socket): void {
-        console.info("Listeners attached");
         this.addSignOnListener(socket);
         this.addMovementListener(socket);
         this.addSignOutListener(socket);
@@ -54,6 +58,9 @@ class GameServer {
         // this.addDeathListener(socket);
         this.addPickupListener(socket);
         this.addPowerUpListener(socket);
+        this.addPlatformGenerationListener(socket);
+        console.info("Listeners attached");
+
     }
 
     private addHitListener(socket) {
@@ -88,16 +95,19 @@ class GameServer {
         // Start game on first user login
         if (!this._gameHasStarted) {
             this._gameHasStarted = true;
+            this.makeRandomCoordinatesDrop(socket, 5000);
         }
-        // Interval for arrow spawning
-        this.makeRandomCoordinatesDrop(socket, 5000);
     }
+
     private makeRandomCoordinatesDrop(socket, interval: number) {
         setInterval(() => {
-            const coordinates = this.generateCoordinates();
-            socket.emit(GameEvents.drop, coordinates);
-            socket.broadcast.emit(GameEvents.drop, coordinates);
+            if (this.powerUps.length < 2) {
+                const coordinates = this.generateCoordinates();
+                io.sockets.emit(GameEvents.drop, coordinates);
+                this.powerUps.push({x: coordinates.x, y: coordinates.y, name: coordinates.powerUp});
+            }
         }, interval);
+
     }
 
     private createPlayer(socket, player: PlayerModel, windowSize: { x, y }): void {
@@ -117,8 +127,8 @@ class GameServer {
         socket.on(GameEvents.authentication, (player, gameSize) => {
             socket.emit(PlayerEvents.players, this.getAllPlayers());
             this.createPlayer(socket, player, gameSize);
-            socket.emit(PlayerEvents.protagonist, socket.player);
-            socket.broadcast.emit(PlayerEvents.joined, socket.player);
+            socket.emit(PlayerEvents.protagonist, socket.player, this._gameHasStarted, this.platformLocations ? this.platformLocations : undefined);
+            socket.broadcast.emit(PlayerEvents.joined, {player: socket.player}, {powerUpList: this.powerUps});
             this.gameInitialised(socket);
         });
     }
@@ -134,9 +144,10 @@ class GameServer {
 
     private addPowerUpListener(socket) {
         // Player collects power up item
-        socket.on(PlayerEvents.powerup, (player, powerUpConfig: PowerUpConfig) => {
-            socket.player.applyPowerUp(powerUpConfig);
-            socket.broadcast.emit(PlayerEvents.powerup, player.uuid);
+        socket.on(PlayerEvents.powerup, (player: PlayerModel) => {
+            socket.player.activePowerUp = player.activePowerUp;
+            console.info(socket.player.activePowerUp);
+            socket.broadcast.emit(PlayerEvents.powerup, player.id, player.activePowerUp);
         });
     }
 
@@ -152,7 +163,7 @@ class GameServer {
         // Player picks up item
         socket.on(PlayerEvents.pickup, (player) => {
             socket.player.ammo = player.ammo;
-            socket.broadcast.emit(PlayerEvents.pickup, player.uuid);
+            socket.broadcast.emit(PlayerEvents.pickup, player.id);
         });
     }
 
@@ -160,10 +171,11 @@ class GameServer {
         return Object.keys(io.sockets.connected).length;
     }*/
 
-    private generateCoordinates(): { x: number, y: number } {
+    private generateCoordinates(): { x: number, y: number, powerUp: string } {
         return {
             x: Math.floor(Math.random() * 1024) + 1,
-            y: Math.floor(Math.random() * 768) + 1
+            y: Math.floor(Math.random() * 768) + 1,
+            powerUp: EnumUtils.RandomEnum()
         };
     }
 
@@ -179,7 +191,6 @@ class GameServer {
                 players.push(player);
             }
         });
-        console.log(players);
         return players;
     }
 
@@ -191,6 +202,12 @@ class GameServer {
      */
     private randomInt(min: number, max: number): number {
         return Math.floor(Math.random() * (max - min) + min);
+    }
+
+    private addPlatformGenerationListener(socket) {
+        socket.on(GameEvents.platformsCreated, (platLocs) => {
+            this.platformLocations = platLocs;
+        });
     }
 }
 

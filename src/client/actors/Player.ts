@@ -44,7 +44,7 @@ export class Player {
         this.controls.update();
     }
 
-    public applyPowerUp(config: PowerUpConfig) {
+    public applyUp(config: PowerUpConfig) {
         this._fireSpeed += config.fireSpeed;
         this._velocity += config.velocity;
         this._player.body.gravity.y -= config.gravity;

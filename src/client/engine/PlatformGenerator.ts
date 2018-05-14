@@ -21,10 +21,10 @@ export class PlatformGenerator {
      * Creates platforms in a random fashion will ensure that platforms do not overlap
      * @param {number} width Can be any given width doesnt need to represent game width
      * @param {number} height Can be any given height doesnt need to represent game height
-     * @param {number} noPlatforms
+     * @param {number} noPlatforms this will be trimmed to ensure no platforms overlap
      * @return {Phaser.Group}
      */
-    generateRandomPlatforms(width: number, height: number, noPlatforms = 15): Phaser.Group {
+    generateRandomPlatforms(width: number, height: number, noPlatforms = 20): {platformLoc: string, platformGroup: Phaser.Group} {
         this._group.enableBody = true;
         this._group.physicsBodyType = Phaser.Physics.ARCADE;
 
@@ -40,7 +40,12 @@ export class PlatformGenerator {
 
         this._group.setAll("body.allowGravity", false);
         this._group.setAll("body.immovable", true);
-        return this._group;
+        const platformLocs: Phaser.Point[] = [];
+        this._group.forEach((p: Phaser.Sprite) => {
+            platformLocs.push(new Phaser.Point(p.x, p.y));
+        }, this);
+
+        return {platformLoc: JSON.stringify(platformLocs), platformGroup: this._group};
     }
 
     private generateRandomXY(): Phaser.Point {
@@ -97,11 +102,11 @@ export class PlatformGenerator {
 
     private removeOverlappingPlatforms() {
         this._group.forEach((p: Phaser.Sprite) => {
-           this._group.forEach((s: Phaser.Sprite) => {
-               if (this._game.physics.arcade.overlap(p, s)) {
-                   s.kill();
-               }
-           }, this);
+            this._group.forEach((s: Phaser.Sprite) => {
+                if (this._game.physics.arcade.overlap(p, s)) {
+                    s.kill();
+                }
+            }, this);
         }, this);
     }
 

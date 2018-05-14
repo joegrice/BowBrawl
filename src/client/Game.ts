@@ -2,7 +2,6 @@ import { Player } from "./actors/Player";
 import { AssetConstants } from "./constants/AssetConstants";
 import { PlatformGenerator } from "./engine/PlatformGenerator";
 import { PowerUpFactory } from "./engine/PowerUpFactory";
-import { PowerUp } from "./actors/PowerUp";
 import { Platform } from "./actors/Platform";
 import { Events } from "../shared/Events";
 import PlayerEvents = Events.PlayerEvents;
@@ -12,12 +11,15 @@ import { Login } from "./screens/login";
 import { PlayerModel } from "../shared/PlayerModel";
 import { PowerUpConfig } from "./actors/PowerUpConfig";
 import { Arrow } from "./actors/Arrow";
+import { PowerUp } from "./actors/PowerUp";
+import { SharedConstants } from "../shared/Constants";
+import { PowerUpModel } from "../shared/PowerUpModel";
 
 declare const window: any; // This is necessary to get socket events!
 
 export class Game {
     private players: Player[]; // Changed this back to array to make it easier for me to understand and implement events
-    // can be changed back later
+    // can be changed back late
     private player: Player;
     private platforms: Phaser.Group;
     private powerUps: Phaser.Group;
@@ -35,17 +37,53 @@ export class Game {
      */
     protected manageAssets(game: Phaser.Game): void {
         this.players = [];
+        this.powerUps = game.add.physicsGroup();
 
-        window.socket.on(PlayerEvents.joined, (player) => {
+        const powerUpFactory = new PowerUpFactory(game, this.powerUps);
+
+        window.socket.on(PlayerEvents.joined, (player, powerUpList: PowerUpModel[]) => {
             this.players.push(new Player(game, player, AssetConstants.Players.PinkyPlayer));
+            powerUpList.forEach(p => {
+                powerUpFactory.placePowerUp(p.name, p.x, p.y);
+            });
+        });
+
+        window.socket.on(GameEvents.drop, (coors: { x: number, y: number, powerUp: string }) => {
+            powerUpFactory.placePowerUp(coors.powerUp, coors.x, coors.y);
+
         });
 
         // Creating a new event for the main player?
         // a main  player is the player that owns the lobby
         // If we see that this has no semantic value can be changed to the general player event
-        window.socket.on(PlayerEvents.protagonist, (player) => {
+        window.socket.on(PlayerEvents.protagonist, (player, isGameInitialised: boolean, platformLocs) => {
             this.player = new Player(game, player, AssetConstants.Players.PinkyPlayer);
+            this.platforms = game.add.physicsGroup();
+            this.platforms.classType = Platform;
+
             this.players.push(this.player);
+            if (platformLocs) {
+                const locations: Phaser.Point[] = JSON.parse(platformLocs);
+                locations.forEach(loc => {
+                    this.platforms.create(loc.x, loc.y, AssetConstants.Environment.Platform);
+                    this.platforms.setAll("body.allowGravity", false);
+                    this.platforms.setAll("body.immovable", true);
+                    this.platforms.forEach((p: Phaser.Sprite) => {
+                        this.platforms.forEach((s: Phaser.Sprite) => {
+                            if (game.physics.arcade.overlap(p, s)) {
+                                s.kill();
+                            }
+                        }, this);
+                    }, this);
+                });
+            }
+            if (!isGameInitialised) {
+                const platformGenerator = new PlatformGenerator(game);
+                const locAndGroup = platformGenerator.generateRandomPlatforms(game.width, game.height);
+                window.socket.emit(GameEvents.platformsCreated, locAndGroup.platformLoc);
+                this.platforms = locAndGroup.platformGroup;
+            }
+
         });
         window.socket.on(PlayerEvents.players, (players: PlayerModel[]) => {
             // If a returning or new player joins current game
@@ -93,9 +131,9 @@ export class Game {
         });
 
         // Player collected power up
-        window.socket.on(PlayerEvents.powerup, (player: Player, powerUpConfig: PowerUpConfig) => {
-            this.players.filter(actor => actor.player.id === player.player.id).map(player => {
-                player.applyPowerUp(powerUpConfig);
+        window.socket.on(PlayerEvents.powerup, (playerid: string, powerup: SharedConstants.PowerUp) => {
+            this.players.filter(p => p.player.id === playerid).map(p => {
+                //
             });
         });
 
@@ -115,6 +153,7 @@ export class Game {
             });
             // todo: Kill arrow sprite
         });
+
         /*!IMPORTANT HERE WE KEEP TRACK OF ALL THE OTHER PLAYERS ACTIONS
         * here we keep the current state
         * */
@@ -128,21 +167,6 @@ export class Game {
                 // todo: detect if player is firing and moving and add animations
             });
         });
-        this.firedArrows = game.add.physicsGroup();
-        this.firedArrows.classType = Arrow;
-        this.platforms = game.add.physicsGroup();
-        this.platforms.classType = Platform;
-        const platformGenerator = new PlatformGenerator(game);
-        this.platforms = platformGenerator.generateRandomPlatforms(game.width, game.height);
-        this.platforms.forEach((p: Phaser.Sprite) => {
-            p.body.checkCollision.down = false;
-            p.body.checkCollision.left = false;
-            p.body.checkCollision.right = false;
-        }, this);
-        this.powerUps = game.add.group();
-        const powerUpFactory = new PowerUpFactory(game, this.platforms);
-        this.powerUps.add(powerUpFactory.placePowerUp(AssetConstants.PowerUps.MovementSpeedBoost));
-        this.powerUps.add(powerUpFactory.placePowerUp(AssetConstants.PowerUps.FireSpeedBoost));
     }
 
     /**
@@ -193,15 +217,23 @@ export class Game {
                     this.player.player,
                     this.players.map(player => player.player)
                 );
-
+                game.physics.arcade.collide(
+                    this.powerUps,
+                    this.platforms
+                );
                 // Apply power up to player
-                game.physics.arcade.overlap(this.player.player, this.powerUps, (player: Phaser, powerUp: PowerUp) => {
+                game.physics.arcade.overlap(this.player.player, this.powerUps, (player, powerUp) => {
                     powerUp.kill();
                     window.socket.emit(PlayerEvents.powerup, {
-                        player: this.player,
-                        powerUpConfig: powerUp
+                        id: this.player.player.id
+
                     });
-                });
+                }, undefined, this);
+                this.platforms.forEach((p: Phaser.Sprite) => {
+                    p.body.checkCollision.down = false;
+                    p.body.checkCollision.left = false;
+                    p.body.checkCollision.right = false;
+                }, this);
 
                 // Hit by bullet
                 game.physics.arcade.collide(this.player.player, this.firedArrows, (player: Phaser.Sprite, arrow: Arrow) => {
@@ -213,20 +245,6 @@ export class Game {
                 });
             }
         }
-
-
-        // todo: Check if arrow has collided with a player an emit the event but first lets create an arrow class of some sort
-        // todo: Then using the overlap method we need to check if the player has touched any arrows and emit that event and destroy the arrow sprite
-
-        /* game.physics.arcade.collide(this.player, this.platforms);
-         game.physics.arcade.overlap(this.players, this.powerUps, (player: Player, powerUp: PowerUp) => {
-             player.applyPowerUp(powerUp.getConfig);
-             powerUp.kill();
-         }, undefined, this);
-
-         if (this.player && this.player.controls) {
-    /         this.player.updateView();
-         }*/
     }
 
     protected properties(game: Phaser.Game): void {
@@ -242,3 +260,4 @@ export class Game {
         game.physics.arcade.gravity.set(0, 800);
     }
 }
+
