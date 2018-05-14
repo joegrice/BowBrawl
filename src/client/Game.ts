@@ -125,11 +125,14 @@ export class Game {
         });
 
         // Player fired arrow
-        window.socket.on(PlayerEvents.arrowfire, (playerX: number, playerY: number, mouseX: number, mouseY: number) => {
+        window.socket.on(PlayerEvents.arrowfire, (playerId: string, playerX: number, playerY: number, mouseX: number, mouseY: number) => {
             const arrow = new Arrow(game, playerX, playerY);
             game.add.existing(arrow);
             this.firedArrows.add(arrow);
             arrow.fire(game, this.player.fireSpeed, mouseX, mouseY);
+            this.players.filter(actor => actor.player.id === playerId).map(player => {
+                player.firedArrow();
+            });
         });
 
         // Player collected power up
@@ -208,6 +211,7 @@ export class Game {
                         this.player.firedArrow();
                         this.player.playerState.set(PlayerStates.Shooting, false);
                         window.socket.emit(PlayerEvents.arrowfire, {
+                            playerId: this.player.player.id,
                             playerX: this.player.player.x,
                             playerY: this.player.player.y,
                             mouseX: game.input.activePointer.x,
