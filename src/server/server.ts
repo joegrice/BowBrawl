@@ -5,12 +5,8 @@ import PlayerEvents = Events.PlayerEvents;
 import { setInterval } from "timers";
 import GameEvents = Events.GameEvents;
 import { PlayerModel } from "../shared/PlayerModel";
-import { PowerUpConfig } from "../client/actors/PowerUpConfig";
-import { SharedConstants } from "../shared/Constants";
 import { EnumUtils } from "../shared/EnumUtils";
 import { PowerUpModel } from "../shared/PowerUpModel";
-import { Arrow } from "../client/actors/Arrow";
-import { Player } from "../client/actors/Player";
 
 const uuid = require("uuid");
 
@@ -58,9 +54,9 @@ class GameServer {
         // this.addDeathListener(socket);
         this.addPickupListener(socket);
         this.addPowerUpListener(socket);
+        this.addPlayerReadyListener(socket);
         this.addPlatformGenerationListener(socket);
         console.info("Listeners attached");
-
     }
 
     private addHitListener(socket) {
@@ -71,8 +67,20 @@ class GameServer {
                 console.log("SERVER: PLAYER HIT, ID: " + hit.playerId);
                 io.sockets.emit(PlayerEvents.hit, hit.playerId, hit.damage);
             } else if (p.health <= 0) {
+                p.alive = false;
                 console.log("SERVER: PLAYER DIED, ID: " + hit.playerId);
                 io.sockets.emit(PlayerEvents.death, hit.playerId);
+            }
+
+            const alive: PlayerModel[] = [];
+            this.players.map(player => {
+                if (player.alive === true) {
+                    alive.push(player);
+                }
+            });
+            if (alive.length === 1) {
+                alive[0].score += 1;
+                io.sockets.emit(GameEvents.roundover, this.players);
             }
         });
     }
@@ -117,7 +125,10 @@ class GameServer {
             ammo: 3,
             x: this.randomInt(0, windowSize.x),
             y: this.randomInt(0, windowSize.y),
-            health: 10
+            health: 10,
+            alive: true,
+            score: 0,
+            ready: false
         };
         socket.player = playerModel;
         this.players.push(playerModel);
@@ -130,6 +141,7 @@ class GameServer {
             socket.emit(PlayerEvents.protagonist, socket.player, this._gameHasStarted, this.platformLocations ? this.platformLocations : undefined);
             socket.broadcast.emit(PlayerEvents.joined, socket.player, this.powerUps);
             this.gameInitialised(socket);
+            console.log("SERVER: PLAYER SIGN IN: " + socket.player.name);
         });
     }
 
@@ -167,6 +179,28 @@ class GameServer {
         });
     }
 
+    private addPlayerReadyListener(socket) {
+        // Player picks up item
+        socket.on(PlayerEvents.ready, (player) => {
+            const p = this.players.find(p => p.id === player.playerId);
+            p.ready = true;
+
+            let ready = 0;
+            this.players.map(player => {
+                if (player.ready) {
+                    ready++;
+                }
+            });
+            if (ready !== this.players.length) {
+                console.log(ready + "/" + this.players.length + "ready...");
+                io.sockets.emit(PlayerEvents.ready, ready, this.players.length);
+            } else {
+                this.players = [];
+                io.sockets.emit(GameEvents.allplayersready);
+            }
+        });
+    }
+
     /* private get players(): number {
         return Object.keys(io.sockets.connected).length;
     }*/
@@ -186,7 +220,7 @@ class GameServer {
     private getAllPlayers(): PlayerModel[] {
         const players = [];
         Object.keys(io.sockets.connected).map((socketId) => {
-            const player = io.sockets.connected[ socketId ].player;
+            const player = io.sockets.connected[socketId].player;
             if (player) {
                 players.push(player);
             }

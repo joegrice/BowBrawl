@@ -6,4 +6,7 @@ export interface PlayerModel {
     ammo: number;
     health: number;
     activePowerUp?: string;
+    alive: boolean;
+    score: number;
+    ready: boolean;
 }

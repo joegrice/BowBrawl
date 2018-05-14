@@ -1,22 +1,9 @@
-import { PhaserLifecycle } from "./PhaserLifecycle";
-import { Game } from "../Game";
 import { AssetConstants } from "../constants/AssetConstants";
 
-export class BrawlGame extends Game implements PhaserLifecycle {
-    private game: Phaser.Game;
+export class BrawlGame extends Phaser.State {
 
     constructor() {
         super();
-        this.game = new Phaser.Game(1024, 768, Phaser.AUTO, "BowBrawl", {
-            preload: this.preload,
-            create: this.create,
-            update: this.update
-        });
-    }
-
-    create(): void {
-        super.properties(this.game);
-        super.manageAssets(this.game);
     }
 
     preload(): void {
@@ -32,7 +19,7 @@ export class BrawlGame extends Game implements PhaserLifecycle {
         game.text(AssetConstants.Resources.PowerUpConfigs, "resources/" + AssetConstants.Resources.PowerUpConfigs);
     }
 
-    update(): void {
-        super.gameUpdate(this.game);
+    create(): void {
+        this.game.state.start("GameState");
     }
 }

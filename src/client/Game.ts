@@ -9,15 +9,13 @@ import GameEvents = Events.GameEvents;
 import { PlayerStates } from "./constants/PlayerStates";
 import { Login } from "./screens/login";
 import { PlayerModel } from "../shared/PlayerModel";
-import { PowerUpConfig } from "./actors/PowerUpConfig";
 import { Arrow } from "./actors/Arrow";
-import { PowerUp } from "./actors/PowerUp";
 import { SharedConstants } from "../shared/Constants";
 import { PowerUpModel } from "../shared/PowerUpModel";
 
 declare const window: any; // This is necessary to get socket events!
 
-export class Game {
+export class Game extends Phaser.State {
     private players: Player[]; // Changed this back to array to make it easier for me to understand and implement events
     // can be changed back late
     private player: Player;
@@ -27,8 +25,29 @@ export class Game {
     private login: Login;
 
     constructor() {
+        super();
         window.socket = io.connect();
         this.login = new Login();
+    }
+
+    init(name: string) {
+        if (name !== undefined) {
+            this.players = [];
+            this.player = undefined;
+            window.socket.emit(GameEvents.authentication, {name}, {
+                x: window.innerWidth,
+                y: window.innerHeight
+            });
+        }
+    }
+
+    create(): void {
+        this.properties(this.game);
+        this.manageAssets(this.game);
+    }
+
+    update(): void {
+        this.gameUpdate(this.game);
     }
 
     /**
@@ -52,7 +71,10 @@ export class Game {
 
         window.socket.on(GameEvents.drop, (coors: { x: number, y: number, powerUp: string }) => {
             powerUpFactory.placePowerUp(coors.powerUp, coors.x, coors.y);
+        });
 
+        window.socket.on(GameEvents.roundover, (players: PlayerModel[]) => {
+            game.state.start("RoundOver", true, false, this.player, players);
         });
 
         // Creating a new event for the main player?

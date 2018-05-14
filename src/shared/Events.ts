@@ -5,6 +5,8 @@ export namespace Events {
         public static start = "game:start";
         public static drop = "game:drop";
         static platformsCreated = "platformsCreated";
+        public static roundover = "game:roundover";
+        public static allplayersready = "game:allplayersready";
     }
     export class ServerEvents {
         public static connected = "connection";
@@ -12,6 +14,7 @@ export namespace Events {
     }
     export class PlayerEvents {
         public static joined = "player:joined";
+        public static ready = "player:ready";
 
         /**
          * When the player that has created the lobby enters
