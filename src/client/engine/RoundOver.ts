@@ -1,12 +1,10 @@
 import { PhaserLifecycle } from "./PhaserLifecycle";
-import { Game } from "../Game";
 import { Events } from "../../shared/Events";
 import GameEvents = Events.GameEvents;
 import PlayerEvents = Events.PlayerEvents;
 import { Player } from "../actors/Player";
 import { AssetConstants } from "../constants/AssetConstants";
 import { PlayerModel } from "../../shared/PlayerModel";
-import { Visibility } from "tslint/lib/rules/completedDocsRule";
 
 declare const window: any; // This is necessary to get socket events!
 export class RoundOver extends Phaser.State implements PhaserLifecycle {

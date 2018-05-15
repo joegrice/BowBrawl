@@ -118,6 +118,7 @@ class GameServer {
                                            io.sockets.emit(GameEvents.gameover, key);
                                        });
                                    } else {
+                                       this.powerUps = [];
                                        io.sockets.emit(GameEvents.roundover, this.players);
                                    }
                                 });
