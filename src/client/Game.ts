@@ -41,14 +41,16 @@ export class Game extends Phaser.State {
     }
 
     init(name: string) {
+
         if (name !== undefined) {
+            window.socket.disconnect();
+            window.socket = io.connect();
             window.socket.emit(GameEvents.authentication, {name}, {
                 x: window.innerWidth,
                 y: window.innerHeight
             });
-            window.socket = undefined;
-            window.socket = io.connect();
         }
+
         this.properties(this.game);
         this.manageAssets(this.game);
     }
