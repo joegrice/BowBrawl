@@ -207,6 +207,7 @@ export class Game extends Phaser.State {
         window.socket.on(PlayerEvents.coordinates, (player) => {
             this.players.filter((actor: Player) => {
                 if (actor.player.id === player.player.id) {
+                    console.log(`x is ${player.coors.x} \n y is: ${player.coors.y}`);
                     actor.player.x = player.coors.x;
                     actor.player.y = player.coors.y;
                 }
@@ -264,6 +265,10 @@ export class Game extends Phaser.State {
                 // Further check to see if any player has collided with a player we bounce them off
                 game.physics.arcade.collide(
                     this.player.player,
+                    this.players.map(player => player.player)
+                );
+                game.physics.arcade.collide(
+                    this.platforms,
                     this.players.map(player => player.player)
                 );
                 game.physics.arcade.collide(

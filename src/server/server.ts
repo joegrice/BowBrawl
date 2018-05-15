@@ -157,7 +157,11 @@ class GameServer {
     }
 
     private addMovementListener(socket) {
-        socket.on(PlayerEvents.coordinates, (coors) => {
+        socket.on(PlayerEvents.coordinates, (coors: { x, y, r, f, m, a }) => {
+             if (coors && socket.player) {
+                 socket.player.x = coors.x;
+                 socket.player.y = coors.y;
+             }
             socket.broadcast.emit(PlayerEvents.coordinates, {
                 coors: coors,
                 player: socket.player
