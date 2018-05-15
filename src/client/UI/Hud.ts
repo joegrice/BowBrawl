@@ -1,14 +1,28 @@
+import { SharedConstants } from "../../shared/Constants";
+
 export class Hud {
     private ammo: Phaser.Text;
     private name: Phaser.Text;
     private health: Phaser.Text;
     private style: { font, fill };
+    private powerup: Phaser.Text;
 
     constructor() {
         this.style = {
             font: "10px Arial",
             fill: "#ffffff"
         };
+    }
+
+    public setPowerup(game: Phaser.Game, player: Phaser.Sprite, powerupKind: string) {
+        let pp: string;
+        if (powerupKind === SharedConstants.PowerUp.fireBoost) {
+            pp = "F";
+        } else if (powerupKind === SharedConstants.PowerUp.movment) {
+            pp = "M";
+        }
+        this.powerup = game.add.text(45, -25, pp, this.style);
+        player.addChild(this.powerup);
     }
 
     public setName(game: Phaser.Game, player: Phaser.Sprite): void {

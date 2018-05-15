@@ -8,7 +8,6 @@ import { AssetConstants } from "../constants/AssetConstants";
 import { PlayerModel } from "../../shared/PlayerModel";
 
 declare const window: any; // This is necessary to get socket events!
-
 export class RoundOver extends Phaser.State implements PhaserLifecycle {
 
     private _player: Player;
@@ -52,6 +51,9 @@ export class RoundOver extends Phaser.State implements PhaserLifecycle {
 
         let distance = 30;
         this._players.map(player => {
+            console.log(this._players);
+            console.log(player);
+            console.log(player.score);
             this.game.add.text(this.game.world.centerX - 125, this.game.world.centerY - 200 + distance, "Name: " + player.name + "    Score: " + player.score, {
                 font: "25px Arial",
                 fill: "#ffffff"

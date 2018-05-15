@@ -7,6 +7,7 @@ export namespace Events {
         static platformsCreated = "platformsCreated";
         public static roundover = "game:roundover";
         public static allplayersready = "game:allplayersready";
+        static gameover = "game:gameover";
     }
     export class ServerEvents {
         public static connected = "connection";

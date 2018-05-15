@@ -40,7 +40,7 @@ export class Game extends Phaser.State {
 
     }
 
-    init(name: string) {
+    init(name: string, winner?: string) {
 
         if (name !== undefined) {
             window.socket.disconnect();
@@ -119,7 +119,8 @@ export class Game extends Phaser.State {
             powerUpFactory.placePowerUp(coors.powerUp, coors.x, coors.y, coors.id);
         });
 
-        window.socket.on(GameEvents.roundover, (players: PlayerModel[]) => {
+        window.socket.on(GameEvents.roundover, (players: PlayerModel[], scores) => {
+            console.log(scores);
             game.state.start("RoundOver", true, false, this.player, players);
         });
 
@@ -179,6 +180,7 @@ export class Game extends Phaser.State {
         window.socket.on(PlayerEvents.powerPickup, (playerid: string, powerup: PowerUpConfig, pId: string) => {
             this.players.filter(p => p.player.id === playerid).map(p => {
                 p.applyUp(powerup);
+                p.hud.setPowerup(game, p.player, powerup.name);
             });
             const pp = this.powerUps.filter(p => p.id === pId).first;
             this.powerUps.remove(pp, true);
@@ -190,7 +192,9 @@ export class Game extends Phaser.State {
                 player.death();
             });
         });
-
+        window.socket.on(GameEvents.gameover, (winner: string) => {
+            game.state.start("GameState", true, false, winner);
+        });
         // Player picks up item
         window.socket.on(PlayerEvents.pickup, (player) => {
             // Once arrows have been picked up
@@ -207,7 +211,6 @@ export class Game extends Phaser.State {
         window.socket.on(PlayerEvents.coordinates, (player) => {
             this.players.filter((actor: Player) => {
                 if (actor.player.id === player.player.id) {
-                    console.log(`x is ${player.coors.x} \n y is: ${player.coors.y}`);
                     actor.player.x = player.coors.x;
                     actor.player.y = player.coors.y;
                 }
@@ -277,9 +280,10 @@ export class Game extends Phaser.State {
                 );
                 // Apply power up to player
                 game.physics.arcade.overlap(this.player.player, this.powerUps, (player, powerUp) => {
-                    powerUp.kill();
                     window.socket.emit(PlayerEvents.powerup, this.player.player.id, powerUp.key, powerUp.id);
                 }, undefined, this);
+
+
                 this.platforms.forEach((p: Phaser.Sprite) => {
                     p.body.checkCollision.down = false;
                     p.body.checkCollision.left = false;

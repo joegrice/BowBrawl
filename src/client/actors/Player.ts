@@ -104,6 +104,10 @@ export class Player {
         this._fireSpeed = value;
     }
 
+    get hud(): Hud {
+        return this._hud;
+    }
+
     public firedArrow() {
         this._ammo -= 1;
         this._hud.updateAmmo(this._ammo);

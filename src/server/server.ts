@@ -1,18 +1,16 @@
 import { Events } from "../shared/Events";
-import ServerEvents = Events.ServerEvents;
+
 import { Socket } from "socket.io";
 import PlayerEvents = Events.PlayerEvents;
 import { setInterval } from "timers";
 import GameEvents = Events.GameEvents;
 import { PlayerModel } from "../shared/PlayerModel";
-import { PowerUpConfig } from "../shared/PowerUpConfig";
-import { SharedConstants } from "../shared/Constants";
 import { EnumUtils } from "../shared/EnumUtils";
 import { PowerUpModel } from "../shared/PowerUpModel";
-import { Arrow } from "../client/actors/Arrow";
-import { Player } from "../client/actors/Player";
 import { PowerUpGenerator } from "./PowerUpGenerator";
 import ServerEvents = Events.ServerEvents;
+import * as admin from "firebase-admin";
+import DataSnapshot = admin.database.DataSnapshot;
 
 const uuid = require("uuid");
 
@@ -20,7 +18,8 @@ const express = require("express");
 const app = express();
 const http = require("http").Server(app);
 const io = require("socket.io")(http);
-
+const admin = require("firebase-admin");
+const serviceAccount = require("../server/bowbrawl-firebase-adminsdk-0wtpu-ae50ed9b6b.json");
 app.use(express.static("public"));
 
 app.get("/", (req, res) => {
@@ -34,11 +33,16 @@ class GameServer {
     private platformLocations: string;
     private players: PlayerModel[];
     private powerUpGetter: PowerUpGenerator;
+    private scores: Map<string, number> = new Map<string, number>();
 
     constructor() {
         this.socketEvents();
         this.players = [];
         this.powerUpGetter = new PowerUpGenerator();
+        admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount),
+            databaseURL: "https://bowbrawl.firebaseio.com"
+        });
     }
 
     public connect(port): void {
@@ -85,8 +89,39 @@ class GameServer {
                 }
             });
             if (alive.length === 1) {
-                alive[ 0 ].score += 1;
-                io.sockets.emit(GameEvents.roundover, this.players);
+                const ref = admin.database().ref("/scores");
+                ref.once("value", (snapshot) => {
+                    // noinspection TypeScriptValidateJSTypes
+                    snapshot.forEach(child => {
+                        console.info(child.val().id, child.val().score);
+                       this.scores.set(child.val().id, child.val().score);
+                    });
+                }).then(() => {
+                    if (this.scores.get(alive[ 0 ].name)) {
+                        this.scores.set(alive[ 0 ].name, this.scores.get(alive[ 0 ].name) as number + 1);
+                    } else {
+                        this.scores.set(alive[ 0 ].name, 1);
+                    }
+                    console.info(this.scores);
+                    ref.remove().then(() => {
+                        this.players.filter(p => {
+                            p.score = this.scores.get(p.name) ? this.scores.get(p.name) : 0;
+                            admin.database().ref("/scores").push().set({
+                                id: p.name,
+                                score: this.scores.get(p.name) ? this.scores.get(p.name) : 0
+                            }).then(() => {
+                                this.scores.forEach((value, key) => {
+                                   if (value === 3) {
+                                       io.sockets.emit(GameEvents.gameover, key);
+                                       // redirect to login screen
+                                   } else {
+                                       io.sockets.emit(GameEvents.roundover, this.players);
+                                   }
+                                });
+                            });
+                        });
+                    });
+                });
             }
         });
     }
@@ -158,10 +193,10 @@ class GameServer {
 
     private addMovementListener(socket) {
         socket.on(PlayerEvents.coordinates, (coors: { x, y, r, f, m, a }) => {
-             if (coors && socket.player) {
-                 socket.player.x = coors.x;
-                 socket.player.y = coors.y;
-             }
+            if (coors && socket.player) {
+                socket.player.x = coors.x;
+                socket.player.y = coors.y;
+            }
             socket.broadcast.emit(PlayerEvents.coordinates, {
                 coors: coors,
                 player: socket.player
@@ -172,15 +207,18 @@ class GameServer {
     private addPowerUpListener(socket) {
         // Player collects power up item
         socket.on(PlayerEvents.powerup, (playerid: string, powerup: string, powerupId: string) => {
-            const powerupConfig = this.powerUpGetter.getPowerUp(powerup);
-            const index = this.powerUps.indexOf(this.powerUps.find(p => p.id === powerupId), 0);
+            if (!socket.player.activePowerUp) {
+                const powerupConfig = this.powerUpGetter.getPowerUp(powerup);
+                const index = this.powerUps.indexOf(this.powerUps.find(p => p.id === powerupId), 0);
 
-            if (index > -1) {
-                this.powerUps.splice(index, 1);
+                if (index > -1) {
+                    this.powerUps.splice(index, 1);
+                }
+
+                socket.player.activePowerUp = powerupConfig;
+                io.sockets.emit(PlayerEvents.powerPickup, playerid, powerupConfig, powerupId);
             }
 
-            socket.player.activePowerUp = powerupConfig;
-            io.sockets.emit(PlayerEvents.powerPickup, playerid, powerupConfig, powerupId);
         });
     }
 
