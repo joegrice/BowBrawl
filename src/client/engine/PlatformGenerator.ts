@@ -24,7 +24,7 @@ export class PlatformGenerator {
      * @param {number} noPlatforms this will be trimmed to ensure no platforms overlap
      * @return {Phaser.Group}
      */
-    generateRandomPlatforms(width: number, height: number, noPlatforms = 40): { platformLoc: string, platformGroup: Phaser.Group } {
+    generateRandomPlatforms(width: number, height: number, noPlatforms = 20): { platformLoc: string, platformGroup: Phaser.Group } {
         this._group.enableBody = true;
         this._group.physicsBodyType = Phaser.Physics.ARCADE;
 
