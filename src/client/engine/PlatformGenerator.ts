@@ -98,14 +98,25 @@ export class PlatformGenerator {
         }
     }
 
-    public removeOverlappingPlatforms() {
-        this._group.forEach((p: Phaser.Sprite) => {
-            this._group.forEach((s: Phaser.Sprite) => {
+    public removeOverlappingPlatforms(group?: Phaser.Group) {
+        if (!group) {
+            group = this._group;
+        }
+        if (this.remove(group)) this.removeOverlappingPlatforms();
+
+    }
+
+    private remove(group: Phaser.Group): boolean {
+        group.forEach((p: Phaser.Sprite) => {
+            group.forEach((s: Phaser.Sprite) => {
                 if (this._game.physics.arcade.overlap(p, s)) {
-                    s.kill();
+                    s.destroy();
+                    group.remove(s, true);
+                    return true;
                 }
             }, this);
         }, this);
+        return false;
     }
 
     private createPlatformAtUniqueLoc(betweenPointStart?: Phaser.Point, betweenPointEnd?: Phaser.Point) {

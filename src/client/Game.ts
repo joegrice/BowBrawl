@@ -66,9 +66,8 @@ export class Game extends Phaser.State {
         this.powerUps = game.add.physicsGroup();
         this.platforms = game.add.physicsGroup();
         this.platforms.classType = Platform;
+
         const platformGenerator = new PlatformGenerator(game, this.platforms);
-
-
         const powerUpFactory = new PowerUpFactory(game, this.powerUps);
 
         window.socket.on(PlayerEvents.joined, (player: PlayerModel) => {
@@ -101,12 +100,13 @@ export class Game extends Phaser.State {
             if (!isGameInitialised) {
                 const locAndGroup = platformGenerator.generateRandomPlatforms(game.width, game.height);
                 window.socket.emit(GameEvents.platformsCreated, locAndGroup.platformLoc);
-                const locations: Phaser.Point[] = JSON.parse(platformLocs);
+                const locations: Phaser.Point[] = JSON.parse(locAndGroup.platformLoc);
                 locations.forEach(loc => {
                     this.platforms.create(loc.x, loc.y, AssetConstants.Environment.Platform);
                 });
             }
             platformGenerator.removeOverlappingPlatforms();
+            platformGenerator.removeOverlappingPlatforms(this.platforms);
         });
 
         window.socket.on(GameEvents.drop, (coors: { x: number, y: number, powerUp: string, id: string }) => {
