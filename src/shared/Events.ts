@@ -11,6 +11,8 @@ export namespace Events {
     export class ServerEvents {
         public static connected = "connection";
         public static discconected = "disconnect";
+        public static cleanup = "server:cleanup";
+        static initCleanup = "server:initialize:cleanup";
     }
     export class PlayerEvents {
         public static joined = "player:joined";

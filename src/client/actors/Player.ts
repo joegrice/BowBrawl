@@ -7,6 +7,7 @@ import { AssetConstants } from "../constants/AssetConstants";
 import { PlayerModel } from "../../shared/PlayerModel";
 import { PowerUpConfig } from "../../shared/PowerUpConfig";
 import { SharedConstants } from "../../shared/Constants";
+import { debug } from "util";
 
 export class Player {
     // Sprite should be variable of player in order to provide an interface to pass to server
@@ -20,6 +21,12 @@ export class Player {
     private _nextFire = 0;
     private _ammo = 3;
     private _fireRate = 200;
+    /**
+     * ONLY FOR DEBUG
+     * DO NOT USE
+     * @type {number}
+     */
+    private static pcount = 0;
     // Power ups should be indicated in states?
     // private _powerUpActive: boolean;
 
@@ -118,7 +125,6 @@ export class Player {
     private createPlayer(game: Phaser.Game, type: any) {
         this._hud = new Hud();
         this.initControls();
-        console.log(this.playerInstance);
         this.player = game.add.sprite(this.playerInstance.x, this.playerInstance.y, type);
         this.player.id = this.playerInstance.id;
         this.player.health = 10;

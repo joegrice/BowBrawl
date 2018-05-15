@@ -13,6 +13,8 @@ import { PowerUpConfig } from "../shared/PowerUpConfig";
 import { Arrow } from "./actors/Arrow";
 import { SharedConstants } from "../shared/Constants";
 import { PowerUpModel } from "../shared/PowerUpModel";
+import ServerEvents = Events.ServerEvents;
+import Players = AssetConstants.Players;
 
 declare const window: any; // This is necessary to get socket events!
 
@@ -25,26 +27,29 @@ export class Game extends Phaser.State {
     private firedArrows: Phaser.Group;
     private login: Login;
 
+    /**
+     * ONLY FOR DEBUG DO NOT USE
+     * @type {number}
+     */
+    private static count = 0;
+
     constructor() {
         super();
         window.socket = io.connect();
         this.login = new Login();
+
     }
 
     init(name: string) {
         if (name !== undefined) {
-            this.players = [];
-            this.player = undefined;
             window.socket.emit(GameEvents.authentication, {name}, {
                 x: window.innerWidth,
                 y: window.innerHeight
             });
+        } else {
+            this.properties(this.game);
+            this.manageAssets(this.game);
         }
-    }
-
-    create(): void {
-        this.properties(this.game);
-        this.manageAssets(this.game);
     }
 
     update(): void {
@@ -57,12 +62,51 @@ export class Game extends Phaser.State {
      */
     protected manageAssets(game: Phaser.Game): void {
         this.players = [];
+        this.player = undefined;
         this.powerUps = game.add.physicsGroup();
+        this.platforms = game.add.physicsGroup();
+        this.platforms.classType = Platform;
+        const platformGenerator = new PlatformGenerator(game, this.platforms);
+
 
         const powerUpFactory = new PowerUpFactory(game, this.powerUps);
 
-        window.socket.on(PlayerEvents.joined, (player) => {
-            this.players.push(new Player(game, player, AssetConstants.Players.PinkyPlayer));
+        window.socket.on(PlayerEvents.joined, (player: PlayerModel) => {
+            // This is called 3 times
+            // Should be called only 1 as there is only 1 other player
+            if (!this.players.find(p => p.player.id === player.id)) {
+                this.players.push(new Player(game, player, AssetConstants.Players.PinkyPlayer));
+            }
+        });
+        window.socket.on(PlayerEvents.protagonist, (player, isGameInitialised: boolean, platformLocs, powerUpList: PowerUpModel[]) => {
+            // This is called twice should be called 1
+            console.log(this.players);
+            if (!this.players.find(p => p.player.id === player.id)) {
+                this.player = new Player(game, player, AssetConstants.Players.PinkyPlayer);
+            }
+
+            this.players.push(this.player);
+            if (powerUpList) {
+                powerUpList.forEach(p => {
+                    powerUpFactory.placePowerUp(p.name, p.x, p.y, p.id);
+                });
+            }
+
+            if (platformLocs) {
+                const locations: Phaser.Point[] = JSON.parse(platformLocs);
+                locations.forEach(loc => {
+                    this.platforms.create(loc.x, loc.y, AssetConstants.Environment.Platform);
+                });
+            }
+            if (!isGameInitialised) {
+                const locAndGroup = platformGenerator.generateRandomPlatforms(game.width, game.height);
+                window.socket.emit(GameEvents.platformsCreated, locAndGroup.platformLoc);
+                const locations: Phaser.Point[] = JSON.parse(platformLocs);
+                locations.forEach(loc => {
+                    this.platforms.create(loc.x, loc.y, AssetConstants.Environment.Platform);
+                });
+            }
+            platformGenerator.removeOverlappingPlatforms();
         });
 
         window.socket.on(GameEvents.drop, (coors: { x: number, y: number, powerUp: string, id: string }) => {
@@ -76,41 +120,6 @@ export class Game extends Phaser.State {
         // Creating a new event for the main player?
         // a main  player is the player that owns the lobby
         // If we see that this has no semantic value can be changed to the general player event
-        window.socket.on(PlayerEvents.protagonist, (player, isGameInitialised: boolean, platformLocs, powerUpList: PowerUpModel[]) => {
-            this.player = new Player(game, player, AssetConstants.Players.PinkyPlayer);
-            this.platforms = game.add.physicsGroup();
-            this.platforms.classType = Platform;
-
-            this.players.push(this.player);
-            if (powerUpList) {
-                powerUpList.forEach(p => {
-                    powerUpFactory.placePowerUp(p.name, p.x, p.y, p.id);
-                });
-            }
-
-            if (platformLocs) {
-                const locations: Phaser.Point[] = JSON.parse(platformLocs);
-                locations.forEach(loc => {
-                    this.platforms.create(loc.x, loc.y, AssetConstants.Environment.Platform);
-                    this.platforms.setAll("body.allowGravity", false);
-                    this.platforms.setAll("body.immovable", true);
-                    this.platforms.forEach((p: Phaser.Sprite) => {
-                        this.platforms.forEach((s: Phaser.Sprite) => {
-                            if (game.physics.arcade.overlap(p, s)) {
-                                s.kill();
-                            }
-                        }, this);
-                    }, this);
-                });
-            }
-            if (!isGameInitialised) {
-                const platformGenerator = new PlatformGenerator(game);
-                const locAndGroup = platformGenerator.generateRandomPlatforms(game.width, game.height);
-                window.socket.emit(GameEvents.platformsCreated, locAndGroup.platformLoc);
-                this.platforms = locAndGroup.platformGroup;
-            }
-
-        });
         window.socket.on(PlayerEvents.players, (players: PlayerModel[]) => {
             // If a returning or new player joins current game
             // Collect all data and update client
@@ -118,11 +127,12 @@ export class Game extends Phaser.State {
             // What this means we must collect all of the visible data the enemies have
             // And update this players browser
             // Assuming ammo is visible
-            console.info(players);
-            players.forEach((player: PlayerModel) => {
-                const enemy = new Player(game, player, AssetConstants.Players.PinkyPlayer);
-                // todo: update states
-                this.players.push(enemy);
+
+            players.map((player: PlayerModel) => {
+                if (!this.players.find(p => p.player.id === player.id)) {
+                    const enemy = new Player(game, player, AssetConstants.Players.PinkyPlayer);
+                    this.players.push(enemy);
+                }
             });
         });
 
@@ -165,7 +175,6 @@ export class Game extends Phaser.State {
                 p.applyUp(powerup);
             });
             const pp = this.powerUps.filter(p => p.id === pId).first;
-            console.log(pp);
             this.powerUps.remove(pp, true);
         });
 
@@ -231,7 +240,6 @@ export class Game extends Phaser.State {
                 // Fire bullet
                 if (this.player.playerState.get(PlayerStates.Shooting)) {
                     if (this.player.ammo > 0) {
-                        console.log("FIRE ARROW");
                         const arrow = new Arrow(game, this.player.player.x, this.player.player.y);
                         game.add.existing(arrow);
                         arrow.fire(game, this.player.fireSpeed, game.input.activePointer.x, game.input.activePointer.y);

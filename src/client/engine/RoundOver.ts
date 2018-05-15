@@ -76,5 +76,6 @@ export class RoundOver extends Phaser.State implements PhaserLifecycle {
             });
             this._player.playerInstance.ready = true;
         }
+
     }
 }

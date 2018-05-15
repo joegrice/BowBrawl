@@ -12,6 +12,7 @@ import { PowerUpModel } from "../shared/PowerUpModel";
 import { Arrow } from "../client/actors/Arrow";
 import { Player } from "../client/actors/Player";
 import { PowerUpGenerator } from "./PowerUpGenerator";
+import ServerEvents = Events.ServerEvents;
 
 const uuid = require("uuid");
 
@@ -71,11 +72,9 @@ class GameServer {
             const p = this.players.find(p => p.id === hit.playerId);
             p.health -= hit.damage;
             if (p.health > 0) {
-                console.log("SERVER: PLAYER HIT, ID: " + hit.playerId);
                 io.sockets.emit(PlayerEvents.hit, hit.playerId, hit.damage);
             } else if (p.health <= 0) {
                 p.alive = false;
-                console.log("SERVER: PLAYER DIED, ID: " + hit.playerId);
                 io.sockets.emit(PlayerEvents.death, hit.playerId);
             }
 
@@ -86,7 +85,7 @@ class GameServer {
                 }
             });
             if (alive.length === 1) {
-                alive[0].score += 1;
+                alive[ 0 ].score += 1;
                 io.sockets.emit(GameEvents.roundover, this.players);
             }
         });
@@ -101,7 +100,6 @@ class GameServer {
 
     private addArrowFireListener(socket) {
         socket.on(PlayerEvents.arrowfire, (coords) => {
-            console.log("SERVER: ARROW FIRED BY: " + coords.playerId + " FROM X:" + coords.playerX + " Y:" + coords.playerY + ", TO: X:" + coords.mouseX + " Y: " + coords.mouseY);
             socket.broadcast.emit(PlayerEvents.arrowfire, coords.playerId, coords.playerX, coords.playerY, coords.mouseX, coords.mouseY);
         });
     }
@@ -120,7 +118,12 @@ class GameServer {
                 const coordinates = this.generateCoordinates();
                 const id = uuid();
 
-                io.sockets.emit(GameEvents.drop, {x: coordinates.x, y: coordinates.y, powerUp: coordinates.powerUp, id});
+                io.sockets.emit(GameEvents.drop, {
+                    x: coordinates.x,
+                    y: coordinates.y,
+                    powerUp: coordinates.powerUp,
+                    id
+                });
                 this.powerUps.push({x: coordinates.x, y: coordinates.y, name: coordinates.powerUp, id});
             }
         }, interval);
@@ -150,7 +153,6 @@ class GameServer {
             socket.emit(PlayerEvents.protagonist, socket.player, this._gameHasStarted, this.platformLocations ? this.platformLocations : undefined, this.powerUps);
             socket.broadcast.emit(PlayerEvents.joined, socket.player);
             this.gameInitialised(socket);
-            console.log("SERVER: PLAYER SIGN IN: " + socket.player.name);
         });
     }
 
@@ -207,18 +209,18 @@ class GameServer {
                 }
             });
             if (ready !== this.players.length) {
-                console.log(ready + "/" + this.players.length + "ready...");
                 io.sockets.emit(PlayerEvents.ready, ready, this.players.length);
             } else {
-                this.players = [];
                 io.sockets.emit(GameEvents.allplayersready);
+                this.players = [];
+
             }
         });
     }
 
-    /* private get players(): number {
+    private get playersNo(): number {
         return Object.keys(io.sockets.connected).length;
-    }*/
+    }
 
     private generateCoordinates(): { x: number, y: number, powerUp: string } {
         return {
@@ -235,7 +237,7 @@ class GameServer {
     private getAllPlayers(): PlayerModel[] {
         const players = [];
         Object.keys(io.sockets.connected).map((socketId) => {
-            const player = io.sockets.connected[socketId].player;
+            const player = io.sockets.connected[ socketId ].player;
             if (player) {
                 players.push(player);
             }
@@ -258,6 +260,7 @@ class GameServer {
             this.platformLocations = platLocs;
         });
     }
+
 }
 
 const gameSession = new GameServer();
