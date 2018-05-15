@@ -110,8 +110,11 @@ class GameServer {
                             }).then(() => {
                                 this.scores.forEach((value, key) => {
                                    if (value === 3) {
-                                       ref.remove();
-                                       io.sockets.emit(GameEvents.gameover, key);
+                                       admin.database().ref("/scores").remove().then(() => {
+                                           this.players = [];
+                                           this.scores = new Map<string, number>();
+                                           io.sockets.emit(GameEvents.gameover, key);
+                                       });
                                    } else {
                                        io.sockets.emit(GameEvents.roundover, this.players);
                                    }
