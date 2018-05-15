@@ -50,7 +50,9 @@ export class Game extends Phaser.State {
                 y: window.innerHeight
             });
         }
-
+        if (winner) {
+            this.login = new Login(winner);
+        }
         this.properties(this.game);
         this.manageAssets(this.game);
     }
@@ -193,7 +195,9 @@ export class Game extends Phaser.State {
             });
         });
         window.socket.on(GameEvents.gameover, (winner: string) => {
-            game.state.start("GameState", true, false, winner);
+            window.socket.disconnect();
+            window.socket = io.connect();
+            game.state.start("GameState", true, false, undefined, winner);
         });
         // Player picks up item
         window.socket.on(PlayerEvents.pickup, (player) => {

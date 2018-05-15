@@ -112,8 +112,8 @@ class GameServer {
                             }).then(() => {
                                 this.scores.forEach((value, key) => {
                                    if (value === 3) {
+                                       ref.remove()
                                        io.sockets.emit(GameEvents.gameover, key);
-                                       // redirect to login screen
                                    } else {
                                        io.sockets.emit(GameEvents.roundover, this.players);
                                    }

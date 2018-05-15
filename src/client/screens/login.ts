@@ -10,13 +10,14 @@ export class Login {
     private _loginForm: HTMLFormElement;
     private _input: HTMLInputElement;
     private _button: HTMLButtonElement;
+    private _winnerText: HTMLParagraphElement;
     private _name: any;
 
-    constructor() {
-        this.createForm();
+    constructor(winner?: string) {
+        this.createForm(winner);
     }
 
-    private createForm(): void {
+    private createForm(winner?: string): void {
         this._formContainer = document.createElement("div");
         this._formContainer.className = "form-container";
 
@@ -44,6 +45,12 @@ export class Login {
         this._loginPage.appendChild(this._form);
         this._form.appendChild(this._loginForm);
         this._formContainer.appendChild(this._loginPage);
+
+        if (winner) {
+            this._winnerText = document.createElement("p");
+            this._winnerText.innerText = `WINNER OF LAST ROUND WAS ${winner}`;
+            this._formContainer.appendChild(this._winnerText);
+        }
 
         document.body.appendChild(this._formContainer);
     }
