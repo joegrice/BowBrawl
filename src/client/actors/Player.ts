@@ -21,6 +21,8 @@ export class Player {
     private _nextFire = 0;
     private _ammo = 3;
     private _fireRate = 200;
+    private emitter: Phaser.Particles.Arcade.Emitter;
+
     /**
      * ONLY FOR DEBUG
      * DO NOT USE
@@ -119,11 +121,23 @@ export class Player {
     }
 
     public death() {
+        this.particleBurst();
         this.player.alive = false;
         this.player.exists = false;
         this.player.visible = false;
         this.player.kill();
         this.player.destroy(true);
+    }
+
+    private particleBurst(): void {
+        this.emitter.x = this.player.x;
+        this.emitter.y = this.player.y;
+        this.emitter.start(true, 800, undefined, 5);
+        this.game.time.events.add(Phaser.Timer.SECOND * 2, this.destroyEmitter, this);
+    }
+
+    private destroyEmitter(): void {
+        this.emitter.destroy();
     }
 
     private createPlayer(game: Phaser.Game, type: any) {
@@ -136,6 +150,9 @@ export class Player {
         // add animations
         this.player.name = this.playerInstance.name;
         this.addPhysicsToPlayer(game);
+        // add particles
+        this.emitter = game.add.emitter(0, 0, 100);
+        this.emitter.makeParticles(AssetConstants.Particles.GreenParticle);
         // this.addAmmo(game);
         this._hud.setName(game, this.player);
         this._hud.setAmmo(game, this.player, this._ammo);

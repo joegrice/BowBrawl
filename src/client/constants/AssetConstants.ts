@@ -15,6 +15,9 @@ export namespace AssetConstants {
     export enum Projectiles {
         Arrow = "arrow.png"
     }
+    export enum Particles {
+        GreenParticle = "particle_green"
+    }
     export enum PowerUps {
         FireSpeedBoost = "fireSpeedBoost",
         MovementSpeedBoost = "movementSpeedBoost"
