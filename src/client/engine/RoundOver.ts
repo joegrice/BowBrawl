@@ -6,6 +6,7 @@ import PlayerEvents = Events.PlayerEvents;
 import { Player } from "../actors/Player";
 import { AssetConstants } from "../constants/AssetConstants";
 import { PlayerModel } from "../../shared/PlayerModel";
+import { Visibility } from "tslint/lib/rules/completedDocsRule";
 
 declare const window: any; // This is necessary to get socket events!
 export class RoundOver extends Phaser.State implements PhaserLifecycle {
@@ -40,7 +41,12 @@ export class RoundOver extends Phaser.State implements PhaserLifecycle {
                         fill: "#ffffff"
                     });
             } else {
-                this.playersReadyText.setText(ready + "/" + totalPlayers + " players ready...");
+                this.playersReadyText = this.game.add.text(this.game.world.centerX - 125, this.game.world.centerY + 150,
+                    ready + "/" + totalPlayers + " players ready...", {
+                        font: "25px Arial",
+                        fill: "#ffffff"
+                    });
+                console.log(ready + "/" + totalPlayers + " players ready...");
             }
         });
 
