@@ -21,6 +21,9 @@ export class Hud {
         } else if (powerupKind === SharedConstants.PowerUp.movment) {
             pp = "M";
         }
+        else if (powerupKind === SharedConstants.PowerUp.extraArrow) {
+            return;
+        }
         this.powerup = game.add.text(45, -25, pp, this.style);
         player.addChild(this.powerup);
     }

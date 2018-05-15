@@ -59,6 +59,8 @@ export class Player {
         this._velocity += config.velocity;
         this._player.body.gravity.y -= config.gravity;
         this._player.health += config.health;
+        this.hud.updateAmmo(this.ammo + config.ammo);
+        this._ammo += config.ammo;
     }
 
     // Setters and Getters

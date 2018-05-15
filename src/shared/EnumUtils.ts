@@ -10,6 +10,8 @@ export class EnumUtils {
                 return PowerUp.fireBoost;
             case 1:
                 return PowerUp.movment;
+            case 2:
+                return PowerUp.extraArrow;
         }
 
         function getRandomInt(min, max) {

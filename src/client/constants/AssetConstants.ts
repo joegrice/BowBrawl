@@ -20,6 +20,7 @@ export namespace AssetConstants {
     }
     export enum PowerUps {
         FireSpeedBoost = "fireSpeedBoost",
-        MovementSpeedBoost = "movementSpeedBoost"
+        MovementSpeedBoost = "movementSpeedBoost",
+        extraArrow = "extraArrow"
     }
 }

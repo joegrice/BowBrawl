@@ -8,6 +8,7 @@ export class PowerUpGenerator {
     constructor() {
         this.powerUpList.set(SharedConstants.PowerUp.movment.toString(), new PowerUpConfig(SharedConstants.PowerUp.movment, 0, 200, 0, 0));
         this.powerUpList.set(SharedConstants.PowerUp.fireBoost.toString(), new PowerUpConfig(SharedConstants.PowerUp.fireBoost, 0, 0, 0, 10));
+        this.powerUpList.set(SharedConstants.PowerUp.extraArrow.toString(), new PowerUpConfig(SharedConstants.PowerUp.extraArrow, 0, 0, 0, 0, 3));
     }
 
     public getPowerUp(name: string): PowerUpConfig {

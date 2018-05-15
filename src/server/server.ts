@@ -9,6 +9,7 @@ import { EnumUtils } from "../shared/EnumUtils";
 import { PowerUpModel } from "../shared/PowerUpModel";
 import { PowerUpGenerator } from "./PowerUpGenerator";
 import ServerEvents = Events.ServerEvents;
+import { SharedConstants } from "../shared/Constants";
 
 const uuid = require("uuid");
 
@@ -113,6 +114,7 @@ class GameServer {
                                        admin.database().ref("/scores").remove().then(() => {
                                            this.players = [];
                                            this.scores = new Map<string, number>();
+                                           this.powerUps = [];
                                            io.sockets.emit(GameEvents.gameover, key);
                                        });
                                    } else {
@@ -151,7 +153,18 @@ class GameServer {
     private makeRandomCoordinatesDrop(socket, interval: number) {
         setInterval(() => {
             if (this.powerUps.length < 2) {
-                const coordinates = this.generateCoordinates();
+                const coordinates = this.generateCoordinatesAndPowerUp();
+                const id = uuid();
+
+                io.sockets.emit(GameEvents.drop, {
+                    x: coordinates.x,
+                    y: coordinates.y,
+                    powerUp: coordinates.powerUp,
+                    id
+                });
+                this.powerUps.push({x: coordinates.x, y: coordinates.y, name: coordinates.powerUp, id});
+            } else {
+                const coordinates = this.generateCoordinatesAndPowerUp(SharedConstants.PowerUp.extraArrow);
                 const id = uuid();
 
                 io.sockets.emit(GameEvents.drop, {
@@ -208,16 +221,19 @@ class GameServer {
     private addPowerUpListener(socket) {
         // Player collects power up item
         socket.on(PlayerEvents.powerup, (playerid: string, powerup: string, powerupId: string) => {
-            if (!socket.player.activePowerUp) {
-                const powerupConfig = this.powerUpGetter.getPowerUp(powerup);
-                const index = this.powerUps.indexOf(this.powerUps.find(p => p.id === powerupId), 0);
+            if (socket.player) {
+                if (!socket.player.activePowerUp || powerup === SharedConstants.PowerUp.extraArrow.toString()) {
+                    const powerupConfig = this.powerUpGetter.getPowerUp(powerup);
+                    const index = this.powerUps.indexOf(this.powerUps.find(p => p.id === powerupId), 0);
 
-                if (index > -1) {
-                    this.powerUps.splice(index, 1);
+                    if (index > -1) {
+                        this.powerUps.splice(index, 1);
+                    }
+                    if (powerup !== SharedConstants.PowerUp.extraArrow) {
+                        socket.player.activePowerUp = powerupConfig;
+                    }
+                    io.sockets.emit(PlayerEvents.powerPickup, playerid, powerupConfig, powerupId);
                 }
-
-                socket.player.activePowerUp = powerupConfig;
-                io.sockets.emit(PlayerEvents.powerPickup, playerid, powerupConfig, powerupId);
             }
 
         });
@@ -265,11 +281,11 @@ class GameServer {
         return Object.keys(io.sockets.connected).length;
     }
 
-    private generateCoordinates(): { x: number, y: number, powerUp: string } {
+    private generateCoordinatesAndPowerUp(powerup?: string): { x: number, y: number, powerUp: string } {
         return {
             x: Math.floor(Math.random() * 1024) + 1,
             y: Math.floor(Math.random() * 768) + 1,
-            powerUp: EnumUtils.RandomEnum()
+            powerUp: powerup ? powerup : EnumUtils.RandomEnum()
         };
     }
 
