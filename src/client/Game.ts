@@ -107,6 +107,9 @@ export class Game extends Phaser.State {
             }
             platformGenerator.removeOverlappingPlatforms();
             platformGenerator.removeOverlappingPlatforms(this.platforms);
+            this.platforms.setAll("body.allowGravity", false);
+            this.platforms.setAll("body.immovable", true);
+
         });
 
         window.socket.on(GameEvents.drop, (coors: { x: number, y: number, powerUp: string, id: string }) => {
