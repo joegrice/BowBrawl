@@ -9,8 +9,6 @@ import { EnumUtils } from "../shared/EnumUtils";
 import { PowerUpModel } from "../shared/PowerUpModel";
 import { PowerUpGenerator } from "./PowerUpGenerator";
 import ServerEvents = Events.ServerEvents;
-import * as admin from "firebase-admin";
-import DataSnapshot = admin.database.DataSnapshot;
 
 const uuid = require("uuid");
 
@@ -112,7 +110,7 @@ class GameServer {
                             }).then(() => {
                                 this.scores.forEach((value, key) => {
                                    if (value === 3) {
-                                       ref.remove()
+                                       ref.remove();
                                        io.sockets.emit(GameEvents.gameover, key);
                                    } else {
                                        io.sockets.emit(GameEvents.roundover, this.players);
