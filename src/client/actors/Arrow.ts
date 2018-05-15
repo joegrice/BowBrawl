@@ -6,9 +6,10 @@ export class Arrow extends Phaser.Sprite {
     private _game: Phaser.Game;
     private _damageValue = 5;
 
-    constructor(game: Phaser.Game, x: number, y: number) {
+    constructor(game: Phaser.Game, x: number, y: number, id: string) {
         super(game, x, y, AssetConstants.Projectiles.Arrow);
         this._game = game;
+        this.id = id;
         this._game.physics.enable(this, Physics.ARCADE);
         this.checkWorldBounds = true;
         this.outOfBoundsKill = true;

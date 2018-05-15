@@ -64,6 +64,7 @@ class GameServer {
         this.addHitListener(socket);
         // this.addDeathListener(socket);
         this.addPickupListener(socket);
+        this.addArrowPlatformListener(socket);
         this.addPowerUpListener(socket);
         this.addPlayerReadyListener(socket);
         this.addPlatformGenerationListener(socket);
@@ -139,7 +140,13 @@ class GameServer {
 
     private addArrowFireListener(socket) {
         socket.on(PlayerEvents.arrowfire, (coords) => {
-            socket.broadcast.emit(PlayerEvents.arrowfire, coords.playerId, coords.playerX, coords.playerY, coords.mouseX, coords.mouseY);
+            io.sockets.emit(PlayerEvents.arrowfire, coords.playerId, coords.playerX, coords.playerY, coords.mouseX, coords.mouseY, coords.id);
+        });
+    }
+
+    private addArrowPlatformListener(socket) {
+        socket.on(GameEvents.arrowplatform, (arrowId: string) => {
+            io.sockets.emit(GameEvents.arrowplatform, arrowId);
         });
     }
 

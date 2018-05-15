@@ -15,6 +15,7 @@ import { SharedConstants } from "../shared/Constants";
 import { PowerUpModel } from "../shared/PowerUpModel";
 import ServerEvents = Events.ServerEvents;
 import Players = AssetConstants.Players;
+import * as uuid from "uuid";
 
 declare const window: any; // This is necessary to get socket events!
 
@@ -121,6 +122,15 @@ export class Game extends Phaser.State {
             powerUpFactory.placePowerUp(coors.powerUp, coors.x, coors.y, coors.id);
         });
 
+        window.socket.on(GameEvents.arrowplatform, (arrowId) => {
+            const arrow: Arrow = this.firedArrows.filter(arrow => arrow.id === arrowId.arrowId).first;
+            if (arrow) {
+                console.log("SERVER: " + arrowId.arrowId);
+                console.log("CLIENT: " + arrow.id);
+                arrow.destroy(true);
+            }
+        });
+
         window.socket.on(GameEvents.roundover, (players: PlayerModel[], scores) => {
             console.log(scores);
             game.state.start("RoundOver", true, false, this.player, players);
@@ -168,14 +178,20 @@ export class Game extends Phaser.State {
         });
 
         // Player fired arrow
-        window.socket.on(PlayerEvents.arrowfire, (playerId: string, playerX: number, playerY: number, mouseX: number, mouseY: number) => {
-            const arrow = new Arrow(game, playerX, playerY);
+        window.socket.on(PlayerEvents.arrowfire, (playerId: string, playerX: number, playerY: number, mouseX: number, mouseY: number, id: string) => {
+            const arrow = new Arrow(game, playerX, playerY, id);
             game.add.existing(arrow);
             this.firedArrows.add(arrow);
             arrow.fire(game, this.player.fireSpeed, mouseX, mouseY);
-            this.players.filter(actor => actor.player.id === playerId).map(player => {
-                player.firedArrow();
-            });
+            if (this.player.player.id !== playerId) {
+                this.players.filter(actor => actor.player.id === playerId).map(player => {
+                    player.firedArrow();
+                    player.playerState.set(PlayerStates.Shooting, false);
+                });
+            } else {
+                this.player.firedArrow();
+                this.player.playerState.set(PlayerStates.Shooting, false);
+            }
         });
 
         // Player collected power up
@@ -254,17 +270,18 @@ export class Game extends Phaser.State {
                 // Fire bullet
                 if (this.player.playerState.get(PlayerStates.Shooting)) {
                     if (this.player.ammo > 0) {
-                        const arrow = new Arrow(game, this.player.player.x, this.player.player.y);
+                        /*const arrow = new Arrow(game, this.player.player.x, this.player.player.y);
                         game.add.existing(arrow);
                         arrow.fire(game, this.player.fireSpeed, game.input.activePointer.x, game.input.activePointer.y);
                         this.player.firedArrow();
-                        this.player.playerState.set(PlayerStates.Shooting, false);
+                        this.player.playerState.set(PlayerStates.Shooting, false);*/
                         window.socket.emit(PlayerEvents.arrowfire, {
                             playerId: this.player.player.id,
                             playerX: this.player.player.x,
                             playerY: this.player.player.y,
                             mouseX: game.input.activePointer.x,
-                            mouseY: game.input.activePointer.y
+                            mouseY: game.input.activePointer.y,
+                            id: uuid()
                         });
                     }
                 }
@@ -282,6 +299,14 @@ export class Game extends Phaser.State {
                     this.powerUps,
                     this.platforms
                 );
+                game.physics.arcade.collide(
+                    this.firedArrows,
+                    this.platforms, (arrow: Arrow, platform: Platform) => {
+                        window.socket.emit(GameEvents.arrowplatform, {
+                            arrowId: arrow.id
+                        });
+                    }
+                );
                 // Apply power up to player
                 game.physics.arcade.overlap(this.player.player, this.powerUps, (player, powerUp) => {
                     window.socket.emit(PlayerEvents.powerup, this.player.player.id, powerUp.key, powerUp.id);
@@ -289,7 +314,6 @@ export class Game extends Phaser.State {
 
 
                 this.platforms.forEach((p: Phaser.Sprite) => {
-                    p.body.checkCollision.down = false;
                     p.body.checkCollision.left = false;
                     p.body.checkCollision.right = false;
                 }, this);
