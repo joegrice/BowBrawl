@@ -4,6 +4,7 @@
   "main": "index.js",
   "scripts": {
     "precommit": "tslint -c tslint.json 'src/**/*.ts'",
+    "start:build": "concurrently \"webpack -w --env=dev\" \"tsc -w src/server/server\"",
     "start:dev": "concurrently \"webpack -w --env=dev\" \"tsc -w src/server/server\" \"nodemon src/server/server\"",
     "build:release": "webpack --env=prod",
     "start": "npm i && webpack --env=dev && node ./src/server/server.js"
